@@ -18,7 +18,8 @@ date: 230923
 `fzf_rg` for fuzzy search content of files to find files
 
 `reverse-ssh-tunnel-manager` for `remote neovim` to start `im-select.exe`
-- when use `neovim` on `new ssh server (and server not have reverse-ssh-tunnel)`,
+- when use `neovim` on `new ssh server (and server not have reverse-ssh-tunnel)`
+- for example (This tool only catch `ssh -Y server`) :
 ```bash (terminal)
 reverse-ssh-tunnel-manager
 # NOTE: or use silent mode (suggest)

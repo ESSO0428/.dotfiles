@@ -19,25 +19,33 @@ ssh_connections=$(ps aux | grep "ssh -Y" | grep -v grep)
 # 選擇一個起始端口
 port=5000
 
+# 使用關聯陣列來追踪已經處理過的伺服器IP
+declare -A processed_ips
+
 # 為每個SSH連接建立反向隧道和ncat監聽
 echo "$ssh_connections" | while read line; do
     # 從SSH命令中提取server_ip
     server_ip=$(echo $line | awk '{print $NF}')
 
-    # 打印並執行命令
-    ssh_cmd="ssh -NR $port:localhost:$port $server_ip"
-    echo "Running: $ssh_cmd"
-    $ssh_cmd &
+    # 檢查此IP是否已經被處理過
+    if [[ -z "${processed_ips[$server_ip]}" ]]; then
+        processed_ips[$server_ip]=1
 
-    ncat_cmd="ncat -l --keep-open $port -e /bin/bash"
-    echo "Running: $ncat_cmd"
-    $ncat_cmd &
+        # 打印並執行命令
+        ssh_cmd="ssh -NR $port:localhost:$port $server_ip"
+        echo "Running: $ssh_cmd"
+        $ssh_cmd &
 
-    # 將端口號寫入到遠端的~/.rssh_tunnel文件中
-    ssh $server_ip "echo $port > ~/.rssh_tunnel" &
+        ncat_cmd="ncat -l --keep-open $port -e /bin/bash"
+        echo "Running: $ncat_cmd"
+        $ncat_cmd &
 
-    # 增加端口號以供下一次使用
-    port=$((port+1))
+        # 將端口號寫入到遠端的~/.rssh_tunnel文件中
+        ssh $server_ip "echo $port > ~/.rssh_tunnel" &
+
+        # 增加端口號以供下一次使用
+        port=$((port+1))
+    fi
 done
 
 # 檢查是否提供了'--slient'參數
@@ -50,4 +58,3 @@ if [[ "$1" != "--silent" ]]; then
         sleep 1
     done
 fi
-
