@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+Magenta="\033[1;35m"
+NOCOLOR="\033[0m"
+
+# Switch between Ripgrep launcher mode (ALT-G) and fzf filtering mode (ALT-F)
+RG_PREFIX="rg --column --line-number --no-heading --color=always --smart-case"
+printf "Input your file name (wildcard support) : "
+read -r grep_fn
+INITIAL_QUERY="${*:-}"
+# IFS=: read -rA selected < <(
+IFS=: read -ra selected < <(
+  FZF_DEFAULT_COMMAND="$RG_PREFIX -g '$grep_fn' $(printf %q "$INITIAL_QUERY")" \
+  fzf --ansi \
+      --color "hl:-1:underline,hl+:-1:underline:reverse" \
+      --disabled --query "$INITIAL_QUERY" \
+      --bind "change:reload:sleep 0.1; $RG_PREFIX -g '$grep_fn' {q} || true" \
+      --bind "alt-f:unbind(change,alt-f)+change-prompt(2. fzf> )+enable-search+clear-query+rebind(alt-g)" \
+      --bind "alt-g:unbind(alt-g)+change-prompt(1. ripgrep> )+disable-search+reload($RG_PREFIX -g '$grep_fn' {q} || true)+rebind(change,alt-f)" \
+      --prompt '1. Ripgrep> ' \
+      --delimiter : \
+      --header '╱ ALT-G (Ripgrep mode) ╱ ALT-F (fzf mode) ╱' \
+      --preview 'echo -e "${GREEN}Search :\n{4}";bat --color=always {1} --highlight-line {2};''echo "${Magenta}AllFilePath :";'"rg -l -g '$grep_fn' -F {q}" \
+      --preview-window 'right:border-left:50%:+{2}+3/3:~3' \
+      --bind 'f2:execute(code -g {1}:{2}:{3}),f4:execute(notepad++.exe {1} -n{2})'
+)
+[ -n "${selected[0]}" ] && echo -e "${GREEN}Search :\n${selected[3]}\n\n${Magenta}SelectFilePath :"; echo "${selected[0]}"; printf "\n" \
+&& echo -e "${Magenta}AllFilePath :";
+rg -l -g "$grep_fn" -F "${selected[3]}"
