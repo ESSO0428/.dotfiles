@@ -13,7 +13,7 @@ date: 230923
 `.bashrc`, `.zshrc` for reference shell env setting files
 `./.ssh/config` is reference ssh config file
 
-####  important
+###  important
 
 `fzf_rg` for fuzzy search content of files to find files
 
