@@ -26,6 +26,13 @@ function cleanup() {
     exit 0
 }
 
+# 檢查是否提供了'--close'參數
+if [[ "$1" == "--close" ]]; then
+    cleanup  # 執行 cleanup 函數來關閉所有進程
+    exit 0
+fi
+
+
 # 殺死所有當前運行的ncat和ssh -fNR進程
 pkill "ncat"
 pkill -f "ssh $ssh_options -fNR"
