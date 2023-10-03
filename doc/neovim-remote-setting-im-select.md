@@ -6,10 +6,7 @@ Filename: neovim-remote-setting-im-select.md
 
 ```vim
 " NOTE: Add below scripts in your init.vm/.vimrc or other source file.vim
-autocmd InsertEnter * call SendOSC("insert")
-autocmd InsertLeave * call SendOSC("normal")
-
-function! SendOSC(mode)
+function! SendInputMethodCommandToLocal(mode)
     " 檢查~/.rssh_tunnel文件是否存在
     if filereadable(expand("~/.rssh_tunnel"))
         " 讀取文件內容以獲取端口號
@@ -26,5 +23,8 @@ function! SendOSC(mode)
         call system(command)
     endif
 endfunction
+
+autocmd InsertEnter * call SendInputMethodCommandToLocal("insert")
+autocmd InsertLeave * call SendInputMethodCommandToLocal("normal")
 ```
 
