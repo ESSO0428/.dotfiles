@@ -1,4 +1,27 @@
+" ==================== Auto load for first time uses ====================
+if empty(glob($HOME.'/.vim/autoload/plug.vim'))
+	silent !curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs
+	\ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+	autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
+
 set hidden
+set mouse=a
+set foldmethod=indent
+set foldlevel=99
+set hlsearch
+set clipboard=unnamedplus
+syntax enable
+for i in range(97,122)
+  let c = nr2char(i)
+  exec "map \e".c." <M-".c.">"
+  exec "map! \e".c." <M-".c.">"
+  exec "map \e".c." <a-".c.">"
+  exec "map! \e".c." <a-".c.">"
+endfor
+
+inoremap <a-j> <esc>
+
 set nowarn
 set number
 set cursorline
@@ -78,8 +101,12 @@ inoremap <S-Tab> <C-D>
 " inoremap <S-Tab> <CD>
 vnoremap <Tab> >gv
 vnoremap <S-Tab> <gv
+vnoremap <leader><c-c> "+y
+vnoremap <leader><c-x> "+d
+noremap gj J
 vnoremap gj J
-
+noremap <a-a> <c-x>
+noremap <a-d> <c-a>
 
 nnoremap <a-v> <c-v>
 " ==================== Cursor Movement ====================
@@ -139,7 +166,9 @@ noremap <LEADER><c-w> :bd!<CR>
 " Use <space> + new arrow keys for moving the cursor around windows
 " colemak keyboard
 " noremap <LEADER>w <C-w>w
-tnoremap <Esc> <C-w>N
+if version >= 801
+	tnoremap <c-n> <C-w>N
+endif	
 
 " noremap <LEADER>u <C-w>k
 " noremap <LEADER>e <C-w>j
@@ -180,7 +209,7 @@ noremap sv <C-w>t<C-w>H
 noremap srh <C-w>b<C-w>K
 noremap srv <C-w>b<C-w>H
 " Press <SPACE> + q to close the window below the current window
-noremap <LEADER>q <C-w>j:q<CR>
+noremap <silent> <leader>q :q<CR>
 
 
 " ==================== Tab management ====================
@@ -334,8 +363,8 @@ endif
 
 if has('nvim')
 else
-  noremap <c-n> <c-v>
   noremap <leader>rc :e $HOME/.vimrc<CR>
+  noremap <leader>rb :e $HOME/.bashrc<CR>
 
   function CleanUselessBuffers()                                                   
       for buf in getbufinfo()                                                                                               
@@ -466,8 +495,6 @@ else
       return mode
     endif
   endfunction
-  set statusline=%1*%{ModeName()}\ %m%r%h%w%=\ %2*\ %{getcwd()}\ %3*\ %{&fileencoding}\ %4*\ %{&fileformat}\ %=\ %5*%{\"\".(\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\"+\":\"\").\"\"}\ %6*[%l,%v]\ %7*%p%%\ \|\ %8*%LL\
-  " set statusline=%1*%{ModeName()}\ %m%r%h%w%=\ %2*\ %{getcwd()}\ %=\ %3*%{\"\".(\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\"+\":\"\").\"\"}\ %4*[%l,%v]\ %5*%p%%\ \|\ %6*%LL\
      
   " hi User1 cterm=none ctermfg=gray ctermbg=darkgreen
   hi User1 cterm=none ctermfg=gray ctermbg=darkgray
@@ -476,9 +503,13 @@ else
   hi User4 cterm=bold ctermfg=green ctermbg=gray
   hi User5 cterm=none ctermfg=darkgrey ctermbg=gray
   hi User6 cterm=none ctermfg=darkgrey ctermbg=gray
-  set tabline=%!MyTabLine()  " custom tab pages line
-  set showtabline=2
 
+  if empty(glob($HOME.'/.vim/plugged/vim-airline/plugin/airline.vim'))
+	  set statusline=%1*%{ModeName()}\ %m%r%h%w%=\ %2*\ %{getcwd()}\ %3*\ %{&fileencoding}\ %4*\ %{&fileformat}\ %=\ %5*%{\"\".(\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\"+\":\"\").\"\"}\ %6*[%l,%v]\ %7*%p%%\ \|\ %8*%LL\
+	  " set statusline=%1*%{ModeName()}\ %m%r%h%w%=\ %2*\ %{getcwd()}\ %=\ %3*%{\"\".(\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\"+\":\"\").\"\"}\ %4*[%l,%v]\ %5*%p%%\ \|\ %6*%LL\
+	  set tabline=%!MyTabLine()  " custom tab pages line
+	  set showtabline=2
+  endif 
   function! SpawnBufferLine()
     let s = ' hello r/vim | '
 
@@ -524,18 +555,99 @@ else
   set tabline=%!SpawnBufferLine()  " Assign the tabline
 endif
 
-
+if !empty(glob($HOME.'/.vim/autoload/plug.vim'))
 call plug#begin()
-" The default plugin directory will be as follows:
-"   - Vim (Linux/macOS): '~/.vim/plugged'
-"   - Vim (Windows): '~/vimfiles/plugged'
-"   - Neovim (Linux/macOS/Windows): stdpath('data') . '/plugged'
-" You can specify a custom plugin directory by passing it as the argument
-"   - e.g. `call plug#begin('~/.vim/plugged')`
-"   - Avoid using standard Vim directory names like 'plugin'
+	" The default plugin directory will be as follows:
+	"   - Vim (Linux/macOS): '~/.vim/plugged'
+	"   - Vim (Windows): '~/vimfiles/plugged'
+	"   - Neovim (Linux/macOS/Windows): stdpath('data') . '/plugged'
+	" You can specify a custom plugin directory by passing it as the argument
+	"   - e.g. `call plug#begin('~/.vim/plugged')`
+	"   - Avoid using standard Vim directory names like 'plugin'
 
-" Make sure you use single quotes
+	" Make sure you use single quotes
 
-" Plug 'gcmt/taboo.vim'
+	Plug 'gcmt/taboo.vim'
 
+	if version >= 801
+		Plug 'jayli/vim-easycomplete'
+		Plug 'tpope/vim-obsession'
+		Plug 'dhruvasagar/vim-prosession'
+		Plug 'ojroques/vim-oscyank', {'branch': 'main'}
+	endif
+
+	Plug 'lfv89/vim-interestingwords'
+	Plug 'tpope/vim-surround'
+	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+	Plug 'junegunn/fzf.vim'
+	Plug 'vim-airline/vim-airline'
+	Plug 'vim-airline/vim-airline-themes'
+	Plug 'gcmt/taboo.vim'
+
+	Plug 'jiangmiao/auto-pairs'
+	Plug 'frazrepo/vim-rainbow'
 call plug#end()
+
+noremap gr :EasyCompleteReference<CR>
+noremap gd :EasyCompleteGotoDefinition<CR>
+" noremap rn :EasyCompleteRename<CR>
+
+set sessionoptions+=tabpages,globals
+" let g:taboo_close_tab_label="%x"
+" let g:taboo_tab_format='%n'
+" let g:airline#extensions#tabline#enabled = 1
+set laststatus=2   " Always show the statusline
+let g:airline#extensions#tabline#show_tab_type = 1
+let g:airline#extensions#tabline#show_tabs = 1
+let g:airline#extensions#tabline#formatter = 'unique_tail'
+let g:airline#extensions#tabline#enabled = 1
+let g:airline_section_c = '%{getcwd()}'
+
+" Taboo
+" Disable Taboo's re-write of the tabline, because airline is doing that.
+" We just want it for renaming tabs (only visible when there are multiple tabs)
+" let g:taboo_tabline = 1
+let g:airline#extensions#taboo#enabled = 1
+let g:airline#extensions#tabline#tab_nr_type = 1 " tab number
+let g:taboo_renamed_tab_format = "[%l]"
+nnoremap <leader>tn :TabooRename 
+
+let g:interestingWordsGUIColors = ['#aeee00', '#fa3e2d', '#2d93fa', '#b970e0', '#ffa724', '#fc7cc5']
+let g:interestingWordsDefaultMappings = 0
+nnoremap <silent> <leader>m :call InterestingWords('n')<cr>
+vnoremap <silent> <leader>m :call InterestingWords('v')<cr>
+nnoremap <silent> <leader>M :call UncolorAllWords()<cr>
+nnoremap <silent> n :call WordNavigation(1)<cr>
+nnoremap <silent> N :call WordNavigation(0)<cr>
+
+nnoremap <silent> <c-f> :BLines<cr>
+
+command! -bang -nargs=* Rg
+  \ call fzf#vim#grep(
+  \   'rg --column --line-number --no-heading --color=always --smart-case '.shellescape(<q-args>), 1,
+  \   <bang>0 ? fzf#vim#with_preview('up:60%')
+  \           : fzf#vim#with_preview('right:50%:hidden', '?'),
+  \   <bang>0)
+
+nnoremap <silent> <leader>sg :Rg<cr>
+nnoremap <silent> <leader>sf :Files<cr>
+nnoremap <silent> <leader>ss :Buffers<cr>
+nnoremap <silent> <leader>so :History<cr>
+nnoremap <silent> <leader>sc :Colors<cr>
+
+" Jump to tab: <Leader>su
+nnoremap <silent> <leader>su :Windows<cr>
+
+" Requires Vim built with clipboard support, typically
+" needs to be self-compiled with clipboard option enabled.
+" You can check for clipboard support in Vim by running
+" 'vim --version' and looking for options like 'xterm_clipboard'.
+if has('clipboard') && version >= 801
+	autocmd TextYankPost *
+		\ if v:event.operator is 'y' || v:event.operator is 'd' |
+		\ execute 'OSCYankRegister +' |
+		\ endif
+
+endif
+
+endif
