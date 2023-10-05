@@ -391,9 +391,13 @@ else
       if !flag                                                                    
           :Lexplore                                                               
       endif                                                                       
-  endfunction                                                                                   
-  " noremap <leader>e :Lexplore<cr>
-  noremap <silent><leader>e :call ToggleLex()<CR>
+  endfunction
+  if version >= 801
+    " noremap <leader>e :Lexplore<cr>
+    noremap <silent><leader>e :call ToggleLex()<CR>
+  else
+    noremap <silent><leader>e :Explore<CR>
+  endif
   augroup netrw_mapping
      autocmd!
      autocmd filetype netrw call NetrwMapping()
