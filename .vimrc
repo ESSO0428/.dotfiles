@@ -589,12 +589,16 @@ call plug#begin()
 	Plug 'gcmt/taboo.vim'
 
 	Plug 'jiangmiao/auto-pairs'
+  Plug 'theniceboy/antovim'
+
 	Plug 'frazrepo/vim-rainbow'
 call plug#end()
 
 noremap gr :EasyCompleteReference<CR>
 noremap gd :EasyCompleteGotoDefinition<CR>
 " noremap rn :EasyCompleteRename<CR>
+
+noremap gs :Antovim<cr>
 
 set sessionoptions+=tabpages,globals
 " let g:taboo_close_tab_label="%x"
