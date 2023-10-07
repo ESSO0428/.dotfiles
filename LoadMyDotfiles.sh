@@ -11,8 +11,7 @@ cp ./bin/ssh-tunnel-manager ~/bin/ssh-tunnel-manager
 cp ./bin/reverse-ssh-tunnel-manager ~/bin/reverse-ssh-tunnel-manager
 
 # NOTE: vim config
-mv ~/.vimrc ~/.vimrc.old
-cp ./.vimrc ~/.vimrc
+bash LoadMyVimConfigOnly.sh
 
 # NOTE: chmod setting
 chmod +x ~/.tmux/.tmux.conf
