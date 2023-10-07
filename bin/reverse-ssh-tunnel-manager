@@ -8,28 +8,43 @@ ssh_options="-o ServerAliveInterval=60 -o ServerAliveCountMax=3"
 
 trap cleanup INT
 
+# 检查是否安装了ncat
+if ! command -v ncat &> /dev/null; then
+  echo "ncat is not installed. Please install ncat to continue."
+  echo "You can install ncat using the following commands (specific commands may vary based on your system):"
+  echo "On Debian/Ubuntu:"
+  echo "sudo apt-get install ncat"
+  echo "On CentOS/RHEL:"
+  echo "sudo yum install ncat"
+  echo "On macOS (with Homebrew):"
+  echo "brew install nmap"
+  echo "on Arch Linux:"
+  echo "sudo pacman -Syu netcat"
+  exit 1
+fi
+
 function cleanup() {
-    echo "Cleaning up..."
-    pkill "ncat"
-    pkill -f "ssh $ssh_options -fNR"
+  echo "Cleaning up..."
+  pkill "ncat"
+  pkill -f "ssh $ssh_options -fNR"
 
-    # 清除所有已处理的 server_ip 相关的 .rssh_tunnel 文件
-    for ip in "${!processed_ips[@]}"; do
-        ssh -f "${ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            echo "Cleared ~/.rssh_tunnel for ${ip}"
-        else
-            echo "Failed to clear ~/.rssh_tunnel for ${ip}"
-        fi
-    done
+  # 清除所有已处理的 server_ip 相关的 .rssh_tunnel 文件
+  for ip in "${!processed_ips[@]}"; do
+    ssh -f "${ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      echo "Cleared ~/.rssh_tunnel for ${ip}"
+    else
+      echo "Failed to clear ~/.rssh_tunnel for ${ip}"
+    fi
+  done
 
-    exit 0
+  exit 0
 }
 
 # 檢查是否提供了'--close'參數
 if [[ "$1" == "--close" ]]; then
-    cleanup  # 執行 cleanup 函數來關閉所有進程
-    exit 0
+  cleanup  # 執行 cleanup 函數來關閉所有進程
+  exit 0
 fi
 
 
@@ -45,65 +60,65 @@ declare -A processed_ips
 
 # 定義一個函數來尋找可用端口
 find_available_ports() {
-    local start_port=5000
-    local end_port=9999
-    local port=$start_port
+  local start_port=5000
+  local end_port=9999
+  local port=$start_port
 
-    while [[ $port -le $end_port ]]; do
-        if ! [[ $(netstat -tl | grep ":$port") ]]; then
-            available_ports+=($port)
-            return  # 找到可用端口后立即退出函数
-        fi
-        ((port++))
-    done
+  while [[ $port -le $end_port ]]; do
+    if ! [[ $(netstat -tl | grep ":$port") ]]; then
+      available_ports+=($port)
+      return  # 找到可用端口后立即退出函数
+    fi
+    ((port++))
+  done
 }
 
 # 為每個SSH連接建立反向隧道和ncat監聽
 echo "$ssh_connections" | while read line; do
-    # 從SSH命令中提取server_ip
-    server_ip=$(echo $line | awk '{print $NF}')
-    ssh -f "${server_ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1
+  # 從SSH命令中提取server_ip
+  server_ip=$(echo $line | awk '{print $NF}')
+  ssh -f "${server_ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1
 
-    # 檢查此IP是否已經被處理過
-    if [[ -z "${processed_ips[$server_ip]}" ]]; then
-        # 每次处理新的 processed_ips 都重新查找可用端口
-        available_ports=()
-        find_available_ports
+  # 檢查此IP是否已經被處理過
+  if [[ -z "${processed_ips[$server_ip]}" ]]; then
+    # 每次处理新的 processed_ips 都重新查找可用端口
+    available_ports=()
+    find_available_ports
 
-        # 从可用端口列表中取出下一个可用端口
-        if [[ ${#available_ports[@]} -eq 0 ]]; then
-            echo "No available ports remaining. Exiting."
-            cleanup
-        fi
-        port_to_use=${available_ports[0]}
-        available_ports=("${available_ports[@]:1}")
-
-        # 打印並執行命令
-        ssh_cmd="ssh $ssh_options -fNR $port_to_use:localhost:$port_to_use $server_ip"
-        echo "Running: $ssh_cmd"
-        $ssh_cmd >/dev/null 2>&1 || continue
-
-        ncat_cmd="ncat -l --keep-open $port_to_use -e /bin/bash"
-        echo "Running: $ncat_cmd"
-        $ncat_cmd &
-
-        # 將端口號寫入到遠端的~/.rssh_tunnel文件中
-        ssh -f $server_ip "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1
-
-        # 标记服务器IP为已处理
-        processed_ips[$server_ip]=1
+    # 从可用端口列表中取出下一个可用端口
+    if [[ ${#available_ports[@]} -eq 0 ]]; then
+      echo "No available ports remaining. Exiting."
+      cleanup
     fi
+    port_to_use=${available_ports[0]}
+    available_ports=("${available_ports[@]:1}")
+
+    # 打印並執行命令
+    ssh_cmd="ssh $ssh_options -fNR $port_to_use:localhost:$port_to_use $server_ip"
+    echo "Running: $ssh_cmd"
+    $ssh_cmd >/dev/null 2>&1 || continue
+
+    ncat_cmd="ncat -l --keep-open $port_to_use -e /bin/bash"
+    echo "Running: $ncat_cmd"
+    $ncat_cmd &
+
+    # 將端口號寫入到遠端的~/.rssh_tunnel文件中
+    ssh -f $server_ip "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1
+
+    # 标记服务器IP为已处理
+    processed_ips[$server_ip]=1
+  fi
 done
 
 # 檢查是否提供了'--slient'參數
 if [[ "$1" != "--silent" ]]; then
-    echo '-----------------------------------------------------'
-    echo "Press Ctrl+C to close \"ssh -fNR\" and \"nat\" process ..."
+  echo '-----------------------------------------------------'
+  echo "Press Ctrl+C to close \"ssh -fNR\" and \"nat\" process ..."
 
-    # 保持腳本運行，直到用戶按下Ctrl+C
-    while true; do
-        sleep 1
-    done
+  # 保持腳本運行，直到用戶按下Ctrl+C
+  while true; do
+    sleep 1
+  done
 fi
 
 

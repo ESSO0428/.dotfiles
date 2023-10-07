@@ -11,25 +11,25 @@ server_name=$user_server
 server_login_port=""
 alias_line=$(grep -E "^alias $1=(.*)" ~/.bashrc)
 if [ -n "$alias_line" ]; then
-    # 使用正則表達式捕獲等號後的值
-    alias_value=$(echo "$alias_line" | sed -E "s/^alias $1=\"(.*)\"$/\1/")
-    # echo $alias_value
-    # 使用正則表達式捕獲帶有 @ 的無空格字串
-    regex="([^[:space:]]+@[[:alnum:].]+)"
-    if [[ $alias_value =~ $regex ]]; then
-        user_server=${BASH_REMATCH[1]}
+  # 使用正則表達式捕獲等號後的值
+  alias_value=$(echo "$alias_line" | sed -E "s/^alias $1=\"(.*)\"$/\1/")
+  # echo $alias_value
+  # 使用正則表達式捕獲帶有 @ 的無空格字串
+  regex="([^[:space:]]+@[[:alnum:].]+)"
+  if [[ $alias_value =~ $regex ]]; then
+    user_server=${BASH_REMATCH[1]}
 
-    # 檢查 alias_value 是否包含 -p 參數
-    if [[ $alias_value == *"-p"* ]]; then
-        port_regex="-p ([0-9]+)"
-        if [[ $alias_value =~ $port_regex ]]; then
-          server_login_port=${BASH_REMATCH[1]}
-        fi
+  # 檢查 alias_value 是否包含 -p 參數
+  if [[ $alias_value == *"-p"* ]]; then
+    port_regex="-p ([0-9]+)"
+    if [[ $alias_value =~ $port_regex ]]; then
+      server_login_port=${BASH_REMATCH[1]}
     fi
-    else
-        echo "Usage: $0 <user@server or ssh_alias> [--max-port <max_port>]"
-        exit 1
-    fi
+  fi
+  else
+    echo "Usage: $0 <user@server or ssh_alias> [--max-port <max_port>]"
+    exit 1
+  fi
 else
   echo "Usage: $0 <user@server or ssh_alias> [--max-port <max_port>]"
   exit 1
@@ -48,19 +48,19 @@ while [[ $# -gt 1 ]]; do
   key="$2"
 
   case $key in
-    --max-port)
-      if ! [[ $3 =~ ^[0-9]+$ ]]; then
-        echo "Invalid max_port value: $3 (must be an integer)"
-        exit 1
-      fi
-      max_port="$3"
-      shift # 移動到下一個參數
-      shift # 移動到下一個參數
-      ;;
-    *)
-      echo "Unknown option: $key"
-      exit 1
-      ;;
+  --max-port)
+    if ! [[ $3 =~ ^[0-9]+$ ]]; then
+    echo "Invalid max_port value: $3 (must be an integer)"
+    exit 1
+    fi
+    max_port="$3"
+    shift # 移動到下一個參數
+    shift # 移動到下一個參數
+    ;;
+  *)
+    echo "Unknown option: $key"
+    exit 1
+    ;;
   esac
 done
 
@@ -68,16 +68,16 @@ declare -a available_ports
 declare -a background_pids
 
 find_available_ports() {
-    local start_port=8888
-    local end_port=9999
-    local port=$start_port
+  local start_port=8888
+  local end_port=9999
+  local port=$start_port
 
-    while [[ $port -le $end_port ]]; do
-        if ! [[ $(netstat -tl | grep ":$port") ]]; then
-            available_ports+=($port)
-        fi
-        ((port++))
-    done
+  while [[ $port -le $end_port ]]; do
+    if ! [[ $(netstat -tl | grep ":$port") ]]; then
+      available_ports+=($port)
+    fi
+    ((port++))
+  done
 }
 
 kill_background_jobs() {
@@ -94,32 +94,32 @@ declare -a available_remote_ports
 # port 使用計數器
 port_count=0
 for port in "${available_ports[@]}"; do
-    if [ -n "$server_login_port" ]; then
-      ssh -fNL "localhost:$port:localhost:$port" -p $server_login_port "${username}@${server}" >/dev/null 2>&1 || continue
-    else
-      ssh -fNL "localhost:$port:localhost:$port" "${username}@${server}" >/dev/null 2>&1 || continue
-    fi
+  if [ -n "$server_login_port" ]; then
+  ssh -fNL "localhost:$port:localhost:$port" -p $server_login_port "${username}@${server}" >/dev/null 2>&1 || continue
+  else
+  ssh -fNL "localhost:$port:localhost:$port" "${username}@${server}" >/dev/null 2>&1 || continue
+  fi
 
-    # 檢查是否成功建立 SSH 連線
-    # if [ $? -eq 0 ]; then
-    if [ -n "$server_login_port" ]; then
-        echo "echo $port >> ~/sent_from_local_ssh_L_port.log" | ssh "${username}"@"${server}" -p $server_login_port
-        echo "ssh -fNL localhost:$port:localhost:$port" -p "$server_login_port ${username}@${server}"
-        available_remote_ports+=($port)
-        ((port_count++))
-        if [ $port_count -ge $max_port ]; then
-            break
-        fi
-    else
-        echo "echo $port >> ~/sent_from_local_ssh_L_port.log" | ssh "${username}"@"${server}"
-        echo "ssh -fNL localhost:$port:localhost:$port ${username}@${server}"
-        available_remote_ports+=($port)
-        ((port_count++))
-        if [ $port_count -ge $max_port ]; then
-            break
-        fi
+  # 檢查是否成功建立 SSH 連線
+  # if [ $? -eq 0 ]; then
+  if [ -n "$server_login_port" ]; then
+    echo "echo $port >> ~/sent_from_local_ssh_L_port.log" | ssh "${username}"@"${server}" -p $server_login_port
+    echo "ssh -fNL localhost:$port:localhost:$port" -p "$server_login_port ${username}@${server}"
+    available_remote_ports+=($port)
+    ((port_count++))
+    if [ $port_count -ge $max_port ]; then
+      break
     fi
-    # fi
+  else
+    echo "echo $port >> ~/sent_from_local_ssh_L_port.log" | ssh "${username}"@"${server}"
+    echo "ssh -fNL localhost:$port:localhost:$port ${username}@${server}"
+    available_remote_ports+=($port)
+    ((port_count++))
+    if [ $port_count -ge $max_port ]; then
+      break
+    fi
+  fi
+  # fi
 done
 cat <<EOF
 -----------------------------------------------------
