@@ -181,6 +181,9 @@ noremap <LEADER>k <C-w>j
 noremap <LEADER>j <C-w>h
 noremap <LEADER>l <C-w>l
 
+noremap <LEADER>J <C-w>t
+noremap <LEADER>n <C-w><C-p>
+
 " Disable the default s key
 noremap s <nop>
 " split the screens to up (horizontal), down (horizontal), left (vertical), right (vertical)
