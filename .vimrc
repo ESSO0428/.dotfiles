@@ -9,6 +9,7 @@ if empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
 endif
 
 set hidden
+set noswapfile
 set mouse=a
 set foldmethod=indent
 set foldlevel=99
