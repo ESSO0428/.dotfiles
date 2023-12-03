@@ -10,6 +10,10 @@ cp ./bin/fzf_rg ~/bin/fzf_rg
 cp ./bin/ssh-tunnel-manager ~/bin/ssh-tunnel-manager
 cp ./bin/reverse-ssh-tunnel-manager ~/bin/reverse-ssh-tunnel-manager
 
+# NOTE: .config directory (ranger)
+mkdir -p ~/.config/
+cp -r ./.config/ranger/ ~/.config/
+
 # NOTE: vim config
 bash LoadMyVimConfigOnly.sh
 
@@ -20,4 +24,6 @@ chmod +x ~/.tmux.conf.local
 chmod +x ~/bin/fzf_rg
 chmod +x ~/bin/ssh-tunnel-manager
 chmod +x ~/bin/reverse-ssh-tunnel-manager
+
+chmod +x ~/.config/ranger/
 
