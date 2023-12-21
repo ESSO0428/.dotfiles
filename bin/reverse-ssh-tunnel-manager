@@ -23,6 +23,21 @@ if ! command -v ncat &> /dev/null; then
   exit 1
 fi
 
+exclude_ports=()
+
+# 避免使用到 container 的 port (但是 stop 的還是會用到)
+# 因此後續要重取 container 時，可能要再重啟這支 reverse-ssh-tunnel-manager 來更換其他 port
+function exclude_docker_port() {
+  # 嘗試填充一個包含 Docker 容器使用的端口的數組
+  local ports_for_docker=()
+  if command -v docker > /dev/null 2>&1; then
+      ports_for_docker=($(docker ps -a --no-trunc | awk '{print $1, $N}' | grep -Eo '[0-9]+:[0-9]+->' | cut -d'-' -f1 | cut -d':' -f2))
+  fi
+  echo "${ports_for_docker[@]}"
+}
+
+exclude_ports+=($(exclude_docker_port))
+
 function cleanup() {
   echo "Cleaning up..."
   pkill "ncat"
@@ -65,7 +80,7 @@ find_available_ports() {
   local port=$start_port
 
   while [[ $port -le $end_port ]]; do
-    if ! [[ $(netstat -tl | grep ":$port") ]]; then
+    if ! [[ $(netstat -tl | grep ":$port") ]] && ! [[ " ${exclude_ports[@]} " =~ " $port " ]]; then
       available_ports+=($port)
       return  # 找到可用端口后立即退出函数
     fi
