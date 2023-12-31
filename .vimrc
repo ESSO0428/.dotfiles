@@ -15,6 +15,7 @@ set foldmethod=indent
 set foldlevel=99
 set hlsearch
 set clipboard=unnamedplus
+autocmd VimLeave * silent !echo -ne "\e[6 q"
 syntax enable
 for i in range(97,122)
   let c = nr2char(i)
