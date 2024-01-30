@@ -82,3 +82,74 @@ PATH=/root/.local/bin:$PATH
 PATH=$HOME/bin/go/bin/:$PATH
 
 
+# ssh and docker container jump terminal tool
+j2remote() {
+  local current_dir=$(pwd)
+  local sshfs_mounts=$(ps -ax | grep 'sshfs' | grep -v 'grep')
+  local ssh_cmd=""
+
+  while read -r line; do
+    if [[ "$line" == "" ]]; then
+      continue
+    fi
+    # 提取端口号（如果存在）
+    local port_command=$(echo "$line" | awk '{for(i=1;i<=NF;i++) if($i=="-p") print $(i+1)}' | sed 's/-p //')
+    # 如果存在端口号，添加 -p 参数到 SSH 命令中
+    [ -n "$port_command" ] && port_command="-p $port_command"
+
+    local command_line=$(echo "$line" | sed 's/-p [0-9]*//')
+    local ssh_address_info=$(echo "$command_line" | awk '{print $6}')
+    local ssh_address=${ssh_address_info%%:*}
+    local work_dir=${ssh_address_info#*:}
+    local local_mount_point=$(echo "$command_line" | awk '{print $7}')
+
+    if [[ "$current_dir" == "$local_mount_point"* ]]; then
+      local sub_dir=${current_dir#$local_mount_point}
+      ssh_cmd="ssh -t -Y ${port_command} ${ssh_address} \"cd ${work_dir}${sub_dir} ; bash --login\""
+      break
+    fi
+  done <<< "$sshfs_mounts"
+
+  if [ -n "$ssh_cmd" ]; then
+    echo "run command: $ssh_cmd"
+    eval $ssh_cmd
+  else
+    echo "Current directory is not part of any SSHFS mount."
+  fi
+}
+j2c() {
+  local current_dir=$(pwd)
+  local container_info=$(docker ps --format "{{.Names}} {{.ID}}" | xargs -I {} sh -c 'echo {} $(docker inspect {} | grep -A1 Binds | tail -1 | grep -oP "(?<=\")[^\"]+(?=\")")')
+  local docker_cmd=""
+
+  while IFS= read -r line; do
+    if [[ "$line" == "" ]]; then
+      continue
+    fi
+
+    local container_name=${line%% *}
+    local rest=${line#* }
+    local container_id=${rest%% *}
+    local binds_info=${rest#* }
+    local volume_path=${binds_info%%:*}
+    local work_dir=${binds_info#*:}
+
+    if [[ "$current_dir" == "$volume_path"* ]]; then
+      local sub_dir=${current_dir#$volume_path}
+      local target_container=${container_name:-$container_id}
+      docker_cmd="docker exec -w $work_dir$sub_dir -it $target_container /bin/bash"
+      break
+    fi
+  done <<< "$container_info"
+
+  if [ -n "$docker_cmd" ]; then
+    echo "run command: $docker_cmd"
+    eval $docker_cmd
+  else
+    echo "Current directory is not a Docker volume."
+  fi
+}
+j2ssh(){
+  j2remote
+  j2c
+}
