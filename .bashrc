@@ -81,6 +81,56 @@ PATH=/root/.local/bin:$PATH
 # wget https://go.dev/dl/go1.19.10.linux-amd64.tar.gz
 PATH=$HOME/bin/go/bin/:$PATH
 
+# sshfs tool
+safe_sshfs() {
+  # 取得參數
+  arg1=$1
+  local_dir_path=$2
+
+  # 判斷參數是否為 alias
+  if [[ $# == 2 && $arg1 == *":"* ]]; then
+    if [[ $(alias `echo "$arg1" | awk -F: '{print $1}'`) ]]; then
+      # 取得 IP
+      remote_ip=$(which `echo "$arg1" | awk -F: '{print $1}'` | awk '{print $NF}')
+      # 取得 path
+      remote_path=$(echo "$arg1" | awk -F: '{print $NF}')
+
+      if [[ $(alias `echo "$arg1" | awk -F: '{print $1}'`) == *"-p"* ]]; then
+        # 取出 -p 後的值
+        port_arg=$(alias `echo "$arg1" | awk -F: '{print $1}'` | awk -F "-p" '{print $2}' | awk '{print "-p " $1}')
+      else
+        # 沒有 port 則輸出空字串
+        port_arg=""
+      fi
+      # 輸出轉換後的字串
+      # echo "$port_arg ${remote_ip}:${remote_path}"
+      remote_address="$remote_ip:$remote_path"
+      if [[ ! -e $local_dir_path ]]; then
+        mkdir -p $local_dir_path 
+        chattr +i $local_dir_path 
+      fi
+      if [ -z "$(ls -A $local_dir_path)" ]; then
+        sshfs $port_arg $remote_address $local_dir_path 
+      fi
+      echo "sshfs link create sucess ..."
+      echo "sshfs (Remote) => $remote_address $port_arg"
+      echo "sshfs (local)  => $local_dir_path"
+    else
+      echo "[ERROR] not register ssh address to bashrc"
+    fi
+  else
+    echo "[ERROR] Please input : sshalias:/path/ local_path"
+  fi
+}
+unlink_sshfs(){
+  for arg in "$@"
+  do
+    (fusermount -zu $arg || echo "[faile] You can try : umount -l $arg && chattr -i $arg && rm -rf $arg") && \
+    chattr -i $arg && \
+    rm -rf $arg
+  done
+}
+
 
 # ssh and docker container jump terminal tool
 j2remote() {
