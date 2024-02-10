@@ -81,6 +81,30 @@ PATH=/root/.local/bin:$PATH
 # wget https://go.dev/dl/go1.19.10.linux-amd64.tar.gz
 PATH=$HOME/bin/go/bin/:$PATH
 
+# code_cli : vscode remote tunnel (code tunnel)
+code_cli() {
+  # Check if code_cli exists in the $HOME directory
+  if [ ! -e "$HOME/code_cli" ]; then
+    # Switch to the $HOME directory
+    cd $HOME
+    # Remove existing vscode_cli.tar.gz file
+    rm -rf vscode_cli.tar.gz
+    # Download Visual Studio Code CLI
+    curl -Lk 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' --output vscode_cli.tar.gz
+    # Extract vscode_cli.tar.gz
+    tar -xf vscode_cli.tar.gz
+    # Rename extracted code to code_cli
+    mv code code_cli
+    # Delete the vscode_cli.tar.gz file
+    rm -rf vscode_cli.tar.gz
+    echo "Installation of code_cli completed."
+  else
+    # If code_cli already exists, execute it as $HOME/code_cli with all passed parameters
+    "$HOME/code_cli" "$@"
+  fi
+}
+
+
 # sshfs tool
 safe_sshfs() {
   # 取得參數
