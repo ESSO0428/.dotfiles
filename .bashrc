@@ -25,16 +25,15 @@ export FZF_DEFAULT_COMMAND="fd --type file"
 
 # wsl
 # export FZF_DEFAULT_OPTS="--no-mouse --bind 'alt-j:preview-down,alt-k:preview-up' --height 40% --layout=reverse --preview '([[ -f {} ]] && (bat --color=\"always\" --theme=\"Visual Studio Dark+\" {} || cat {})) || ([[ -d {} ]] && (tree -C {} | head -200)) || echo {} 2> /dev/null | head -200' --bind 'alt-d:toggle-preview,f1:execute(notepad++.exe {}),f2:execute(code {})'"
-export FZF_DEFAULT_OPTS="--no-mouse --bind 'alt-k:preview-down,alt-i:preview-up'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'ctrl-k:down,ctrl-i:up'"
+export FZF_DEFAULT_OPTS="--no-mouse --bind 'ctrl-o:preview-down,ctrl-u:preview-up'"
+FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'ctrl-s:down,ctrl-w:up'"
+FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'alt-k:down,alt-i:up'"
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'tab:toggle-out,shift-tab:toggle-in'"
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'alt-d:toggle-preview'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'ctrl-j:change-preview-window(99%,right),ctrl-l:change-preview-window(50%,right)'"
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'alt-j:change-preview-window(99%,right),alt-l:change-preview-window(50%,right)'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --height 40% --layout=reverse --preview '([[ -f {} ]] && (bat --color=\"always\" --theme=\"Visual Studio Dark+\" {} || cat {})) || ([[ -d {} ]] && ( tree -C {} | head -200)) || echo {} 2> /dev/null | head -200'"
+FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --height 40% --layout=reverse --preview '([[ -f {} ]] && (bat --color=\"always\" --theme=\"Visual Studio Dark+\" {} || cat {})) || ([[ -d {} ]] && (tree -C {} | head -200)) || echo {} 2> /dev/null | head -200'"
 # FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'f1:execute(vim -c \"execute \\\"edit\\\" expand({})\" >/dev/tty),f2:execute(code {})'"
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'f1:execute(~/nvim.appimage {}),f2:execute(code {})'"
-
 
 
 # kitty image preview (requeir openGL3.3 above in Lab PC [we don't have])
