@@ -3,6 +3,7 @@ export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/nu
 export DISPLAY=:0
 # LIBGL_ALWAYS_INDIRECT=0
 
+SHELL=$0
 # [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 # bat (酷炫版的 cat 具有語法高量的功能)
