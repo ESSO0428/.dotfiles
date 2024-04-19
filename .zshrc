@@ -6,6 +6,8 @@ if [ "$JumpFromZSHRC" != "Y" ]; then
 		. /etc/bashrc
 	fi
 fi
+
+SHELL=$0
 # After skip read /etc/bashrc/ unset JumpFromZSHRC
 if [ "$JumpFromZSHRC" = "Y" ]; then unset JumpFromZSHRC; fi
 
