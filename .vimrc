@@ -2,6 +2,7 @@
 let use_custom_statusline = 0
 let use_plugins = 1
 
+let g:MYVIMRC="$HOME/.vimrc"
 if empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
   silent !curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
