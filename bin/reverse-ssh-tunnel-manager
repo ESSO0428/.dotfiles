@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # 選擇一個起始端口
 port=5000
@@ -92,7 +92,6 @@ find_available_ports() {
 echo "$ssh_connections" | while read line; do
   # 從SSH命令中提取server_ip
   server_ip=$(echo $line | awk '{print $NF}')
-  ssh -f "${server_ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1
 
   # 檢查此IP是否已經被處理過
   if [[ -z "${processed_ips[$server_ip]}" ]]; then
@@ -118,7 +117,8 @@ echo "$ssh_connections" | while read line; do
     $ncat_cmd &
 
     # 將端口號寫入到遠端的~/.rssh_tunnel文件中
-    ssh -f $server_ip "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1
+    ssh "${server_ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1 && \
+      ssh $server_ip "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1 &
 
     # 标记服务器IP为已处理
     processed_ips[$server_ip]=1
@@ -128,12 +128,10 @@ done
 # 檢查是否提供了'--slient'參數
 if [[ "$1" != "--silent" ]]; then
   echo '-----------------------------------------------------'
-  echo "Press Ctrl+C to close \"ssh -fNR\" and \"nat\" process ..."
+  echo "Press Ctrl+C to close \"ssh -fNR\" and \"ncat\" process ..."
 
   # 保持腳本運行，直到用戶按下Ctrl+C
   while true; do
     sleep 1
   done
 fi
-
-
