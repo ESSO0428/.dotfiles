@@ -1,4 +1,56 @@
 " ==================== Auto load for first time uses ====================
+map <esc>[1;5D <C-Left>
+map <esc>[1;5C <C-Right>
+function! s:metacode(key, clear)
+  if a:clear
+    exec "set <M-".a:key.">="
+  else
+    exec "set <M-".a:key.">=\e".a:key
+  endif
+endfunc
+
+function! s:set_meta(clear)
+  for i in range(10)
+    call s:metacode(nr2char(char2nr('0') + i), a:clear)
+  endfor
+  for i in range(26)
+    call s:metacode(nr2char(char2nr('a') + i), a:clear)
+    let t = nr2char(char2nr('A') + i)
+    call s:metacode(t, a:clear)
+  endfor
+  for c in [',', '.', '/', ';', '{', '}','\']
+    call s:metacode(c, a:clear)
+  endfor
+  for c in ['?', ':', '-', '_', '+', '=', "'"]
+    call s:metacode(c, a:clear)
+  endfor
+endfunction
+
+" init
+call s:set_meta(0)
+
+function! s:auto_meta(clear)
+  if &bt == 'terminal'
+    if a:clear
+      call s:set_meta(1)
+    else
+      call s:set_meta(0)
+    endif
+  endif
+endfunction
+
+augroup TermMeta
+  autocmd!
+  autocmd WinEnter * call <sid>auto_meta(1)
+  autocmd WinLeave * call <sid>auto_meta(0)
+augroup END
+fu s:fix_terminal_readline() abort
+    for key in map(range(char2nr('a'), char2nr('z')) + range(char2nr('A'), char2nr('Z')), 'nr2char(v:val)')
+        exe 'tno <m-' .. key .. '> <esc>' .. key
+    endfor
+endfu
+call s:fix_terminal_readline()
+
 let use_custom_statusline = 0
 let use_plugins = 1
 
@@ -18,13 +70,13 @@ set hlsearch
 set clipboard=unnamedplus
 autocmd VimLeave * silent !echo -ne "\e[6 q"
 syntax enable
-for i in range(97,122)
-  let c = nr2char(i)
-  exec "map \e".c." <M-".c.">"
-  exec "map! \e".c." <M-".c.">"
-  exec "map \e".c." <a-".c.">"
-  exec "map! \e".c." <a-".c.">"
-endfor
+" for i in range(97,122)
+"   let c = nr2char(i)
+"   exec "map \e".c." <M-".c.">"
+"   exec "map! \e".c." <M-".c.">"
+"   exec "map \e".c." <a-".c.">"
+"   exec "map! \e".c." <a-".c.">"
+" endfor
 
 inoremap <a-j> <esc>
 
@@ -41,16 +93,12 @@ set shiftwidth=4
 set softtabstop=4
 set autoindent
 
-noremap <LEADER><LEADER> <Esc>/<++><CR>:nohlsearch<CR>"_c4l
-"
-" inoremap ,, <++>
-"" inoremap ,b `` <++><Left><Left><Left><Left><Left><Left>
-" inoremap ,b `` <++><esc>F`a
-"" inoremap ,c ```<++>```<cr><cr><++><Up><Up><Left><cr><Right><Right><Right><Right><cr><Up><Up><Right><Right><Right>
-" inoremap ,c ```<++>```<cr><cr><++><esc>2ki<cr><esc>f>a<cr><esc>2k$a
-" inoremap ,f <Esc>/<++><CR>:nohlsearch<CR>"_c4l
-inoremap ,a <C-D>
-
+let mapleader=" "
+nnoremap <leader>dft :diffthis<cr>
+nnoremap <leader>dfw :diffoff<cr>
+nnoremap <leader>dfW :diffoff!<cr>
+nnoremap <leader>dfs :set scrollbind!<cr>
+nnoremap <leader>dfe :widno set noscrollbind<cr>
 autocmd BufRead,BufNewFile *.md inoremap <buffer> ,, <++>
             \| inoremap <buffer> ,c ```<++>```<CR><CR><++><Esc>2ki<CR><Esc>f>a<CR><Esc>2k$a
             \| inoremap <buffer> ,f <Esc>/<++><CR>:nohlsearch<CR>"_c4l
@@ -61,7 +109,6 @@ hi NonText ctermfg=gray guifg=#414348
 
 
 set guifont=Courier\ New:h30
-let mapleader=" "
 nnoremap Q :qa<CR>
 nnoremap S :w<CR>
 " Open the vimrc file anytime
@@ -71,36 +118,57 @@ nnoremap S :w<CR>
 " noremap l u
 " normal keyboard
 nmap u <Nop>
-noremap z u
+nnoremap z u
 " Insert Key
 noremap h i
 noremap H I
 " Copy to system clipboard
 vnoremap Y "+y
 " Find pair
-noremap ,. %
-vnoremap ni $%
+nnoremap g{ %
+vnoremap g{ %
+nnoremap g} $%
+vnoremap g} $%
 " Search
 noremap <LEADER><CR> :nohlsearch<CR>
 
 " Folding
-noremap <silent> <LEADER>o za
-noremap <silent> <LEADER>Oa zM
-noremap <silent> <LEADER>Od zR
+nnoremap <silent> <LEADER>o za
+nnoremap <silent> <LEADER>Oa zM
+nnoremap <silent> <LEADER>Od zR
 
-noremap o o<ESC>
-noremap u O<ESC>
-noremap O <Nop>
-noremap O dd
+vnoremap <silent> <LEADER>o za
+vnoremap <silent> <LEADER>Oa zC
+vnoremap <silent> <LEADER>Od zO
+
+nnoremap <silent> [{ zk
+nnoremap <silent> ]} zj
+nnoremap <silent> <c-[> zk
+nnoremap <silent> <c-]> zj
+
+
+nnoremap o o<ESC>
+nnoremap u O<ESC>
+nnoremap O <Nop>
+nnoremap O dd
 
 noremap u O<ESC>
 noremap U ddk
 " noremap <c-y> yyp
-noremap <c-d> yyp
+nnoremap <c-d> yyp
 " nmap < <<CR>
 " nmap > ><CR>
+nnoremap x "_x
+nnoremap <leader>d "_d
+nnoremap <leader>D "_D
+nnoremap <leader>c "_c
+nnoremap <leader>C "_C
+vnoremap <leader>d "_d
+vnoremap <leader>D "_D
+vnoremap <leader>c "_c
+vnoremap <leader>C "_C
 
-nnoremap <c-n> <tab>
+" nnoremap <c-n> <tab>
 nnoremap <Tab> >>_
 nnoremap <S-Tab> <<_
 inoremap <S-Tab> <C-D>
@@ -111,10 +179,15 @@ vnoremap <leader><c-c> "+y
 vnoremap <leader><c-x> "+d
 noremap gj J
 vnoremap gj J
-noremap <a-a> <c-x>
-noremap <a-d> <c-a>
+nnoremap <a-a> <c-x>
+nnoremap <a-d> <c-a>
 
 nnoremap <a-v> <c-v>
+inoremap <c-v> <c-r>+
+nnoremap <c-v> p
+	
+nnoremap <c-o> 10<C-E>
+nnoremap <c-u> 10<C-Y>
 " ==================== Cursor Movement ====================
 " New cursor movement (the default arrow keys are used for resizing windows)
 "     ^
@@ -164,8 +237,9 @@ noremap B 5b
 " ==================== buffer control =======================
 nnoremap <c-j> :bprevious<CR>
 nnoremap <c-l> :bnext<CR>
-noremap <c-w> :bd<CR>
-noremap <LEADER><c-w> :bd!<CR>
+nnoremap <c-w> :bd<CR>
+nnoremap <leader><c-w> :bd!<CR>
+nnoremap <leader>d<c-w> :bd!<CR>
 
 
 " ==================== Window management ====================
@@ -231,7 +305,8 @@ noremap <silent> <leader>q :q<CR>
 " noremap ti :tabe<CR>
 " noremap tI :tab split<CR>
 " noremap ti :tabe<CR>
-noremap <F1> :tab split<CR>
+" noremap <F1> :tab split<CR>
+nnoremap <a-'> :tab split<CR>
 
 
 " Move around tabs with tn and ti
@@ -242,8 +317,8 @@ noremap <F1> :tab split<CR>
 
 " noremap tj :-tabnext<CR>
 " noremap tl :+tabnext<CR>
-noremap <F2> :-tabnext<CR>
-noremap <F3> :+tabnext<CR>
+" noremap <F2> :-tabnext<CR>
+" noremap <F3> :+tabnext<CR>
 
 
 " Move the tabs with tmn and tmi
@@ -254,22 +329,26 @@ noremap <F3> :+tabnext<CR>
 " noremap tmj :-tabmove<CR>
 " noremap tml :+tabmove<CR>
 
-noremap <a-'> :tab split<CR>
-noremap <a-,> :tabprevious<CR>
-noremap <a-.> :tabnext<CR>
-noremap <F6> :-tabmove<CR>
-noremap <F7> :+tabmove<CR>
-noremap <a-\> :tabclose<CR>
+nnoremap <a-'> :tab split<CR>
+nnoremap <a-,> :tabprevious<CR>
+nnoremap <a-.> :tabnext<CR>
+" noremap <F6> :-tabmove<CR>
+" noremap <F7> :+tabmove<CR>
+nnoremap <C-left> :tabmove -1<CR>
+nnoremap <c-right> :tabmove +1<CR>
+nnoremap <a-/> :tabfirst<CR>
+nnoremap <a-\> :tabclose<CR>
 " noremap tc :tabclose<CR>
-noremap <F4> :tabclose<CR>
+" noremap <F4> :tabclose<CR>
 
 
 " ==================== Other useful stuff ====================
 " Open a new instance of st with the cwd
 nnoremap \t :tabe<CR>:-tabmove<CR>:term sh -c 'st'<CR><C-\><C-N>:q<CR>
 " Opening a terminal window
-noremap <LEADER>/ :set splitbelow<CR>:split<CR>:res +10<CR>:term<CR>
-noremap <LEADER>b- :b#<CR>
+nnoremap <LEADER>/ :set splitbelow<CR>:split<CR>:res +10<CR>:term<CR>
+" nnoremap <LEADER>b- :b#<CR>
+nnoremap <a--> :b#<CR>
 
 
 " set wrap
@@ -286,12 +365,15 @@ nnoremap sgf <c-w>gf
 
 
 if exists('$TMUX')
-  let &t_SI = "\<Esc>Ptmux;\<Esc>\e[5 q\<Esc>\\"
-  let &t_EI = "\<Esc>Ptmux;\<Esc>\e[2 q\<Esc>\\"
+  " let &t_SI = "\<Esc>Ptmux;\<Esc>\e[5 q\<Esc>\\"
+  " let &t_EI = "\<Esc>Ptmux;\<Esc>\e[2 q\<Esc>\\"
+  let &t_SI = "\e[5 q"
+  let &t_EI = "\e[2 q"
 else
   let &t_SI = "\e[5 q"
   let &t_EI = "\e[2 q"
 endif
+
 
 if has('nvim')
 else
