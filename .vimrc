@@ -157,6 +157,8 @@ nnoremap O dd
 noremap u O<ESC>
 noremap U ddk
 " noremap <c-y> yyp
+nnoremap <a-i> <c-u>
+nnoremap <a-k> <c-d>
 nnoremap <c-d> yyp
 " nmap < <<CR>
 " nmap > ><CR>
