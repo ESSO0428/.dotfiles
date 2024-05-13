@@ -79,6 +79,8 @@ syntax enable
 " endfor
 
 inoremap <a-j> <esc>
+inoremap <a-i> <c-p>
+inoremap <a-k> <c-n>
 
 set nowarn
 set number
@@ -185,7 +187,7 @@ nnoremap <a-d> <c-a>
 nnoremap <a-v> <c-v>
 inoremap <c-v> <c-r>+
 nnoremap <c-v> p
-	
+
 nnoremap <c-o> 10<C-E>
 nnoremap <c-u> 10<C-Y>
 " ==================== Cursor Movement ====================
