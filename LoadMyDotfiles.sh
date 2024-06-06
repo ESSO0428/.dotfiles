@@ -6,6 +6,7 @@ cp ./.tmux/.tmux.conf ~/.tmux/.tmux.conf
 cp ./.tmux.conf.local ~/.tmux.conf.local
 
 # NOTE: bin directory tools (fzf_rg, ssh-tunnel, etc)
+mkdir -p ~/bin/
 cp ./bin/fzf_rg ~/bin/fzf_rg
 cp ./bin/ssh-tunnel-manager ~/bin/ssh-tunnel-manager
 cp ./bin/reverse-ssh-tunnel-manager ~/bin/reverse-ssh-tunnel-manager
