@@ -99,6 +99,7 @@ set noswapfile
 set mouse=a
 set foldmethod=indent
 set foldlevel=99
+set foldenable
 set hlsearch
 set clipboard=unnamedplus
 autocmd VimLeave * silent !echo -ne "\e[6 q"
@@ -400,6 +401,15 @@ nnoremap sgl <c-w>vgf
 nnoremap sgF <c-w>gF
 nnoremap sgf <c-w>gf
 
+function DeleteHiddenBuffers() " Vim with the 'hidden' option
+  let tpbl=[]
+  call map(range(1, tabpagenr('$')), 'extend(tpbl, tabpagebuflist(v:val))')
+  for buf in filter(range(1, bufnr('$')), 'bufexists(v:val) && index(tpbl, v:val)==-1')
+    silent execute 'bwipeout' buf
+  endfor
+endfunction
+command! DeleteHiddenBuffers call DeleteHiddenBuffers()
+nnoremap <leader>bc :DeleteHiddenBuffers<cr>
 
 if exists('$TMUX')
   " let &t_SI = "\<Esc>Ptmux;\<Esc>\e[5 q\<Esc>\\"
@@ -435,6 +445,7 @@ if IsOwneriVrmc
     source ~/.vim/vim/keymap.vim
 
     source ~/.vim/vim/user/interestingWords.vim
+    source ~/.vim/vim/user/fold-cycling.vim
     source ~/.vim/vim/user/fzf.vim
   endif
 else
@@ -452,6 +463,7 @@ else
       execute 'source ' . OwnerVimrcDir . '/.vim/vim/opt.vim'
       execute 'source ' . OwnerVimrcDir . '/.vim/vim/keymap.vim'
       execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/interestingWords.vim'
+      execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/fold-cycling.vim'
       execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/fzf.vim'
     endif
   endif
