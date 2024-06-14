@@ -18,11 +18,11 @@ call plug#begin()
   Plug 'lfv89/vim-interestingwords'
   Plug 'tpope/vim-surround'
   if IsOwneriVrmc
-	  Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+    Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
   else
-	  if IsFindOwnerVimrcDir
-	    Plug 'junegunn/fzf', { 'dir': OwnerVimrcDir . '/.fzf' }
-	  endif
+    if IsFindOwnerVimrcDir
+      Plug 'junegunn/fzf', { 'dir': OwnerVimrcDir . '/.fzf' }
+    endif
   endif
   Plug 'junegunn/fzf.vim'
   Plug 'vim-airline/vim-airline'
