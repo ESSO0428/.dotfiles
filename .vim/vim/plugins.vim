@@ -33,4 +33,5 @@ call plug#begin()
   Plug 'theniceboy/antovim'
 
   Plug 'frazrepo/vim-rainbow'
+  Plug 'arecarn/vim-fold-cycle'
 call plug#end()
