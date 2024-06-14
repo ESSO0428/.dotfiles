@@ -1,5 +1,7 @@
 " ==================== Auto load for first time uses ====================
-" for other server user can add alias uvim="vim -N -u /home/Andy6/" to .bashrc (can use my keymap not plug mode; ref function! IsOnweriVrmc) <if this .vimrc not in your directory but in my>
+" for other server user can add alias uvim="vim -N -u /home/Andy6/" to .bashrc
+" (can use my local config <inculde plug and keymap> IsOnweriVrmc) 
+" <if this .vimrc not in your directory but in my>
 map <esc>[1;5D <C-Left>
 map <esc>[1;5C <C-Right>
 function! s:metacode(key, clear)
@@ -56,7 +58,7 @@ let use_custom_statusline = 0
 let use_plugins = 1
 
 let g:MYVIMRC="$HOME/.vimrc"
-function! IsOnweriVrmc()
+function! IsOwneriVrmc()
   for arg in v:argv
     if arg == '-u'
       return v:false
@@ -64,8 +66,27 @@ function! IsOnweriVrmc()
   endfor
   return v:true
 endfunction
-let IsOnweriVrmc = IsOnweriVrmc()
-if IsOnweriVrmc
+
+function! GetVimrcDir()
+  let vimrc_path = ""
+  let found_u = v:false
+for i in range(1, len(v:argv) - 1)
+  if v:argv[i] == '-u'
+  let vimrc_path = v:argv[i + 1]
+  let found_u = v:true
+  break
+  endif
+  endfor
+
+  let vimrc_dir = fnamemodify(vimrc_path, ':p:h')
+
+  return [found_u, vimrc_dir]
+endfunction
+
+let IsOwneriVrmc = IsOwneriVrmc()
+let [IsFindOwnerVimrcDir, OwnerVimrcDir] = GetVimrcDir()
+
+if IsOwneriVrmc
    if empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
      silent !curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs
            \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
@@ -362,7 +383,7 @@ nnoremap <a-\> :tabclose<CR>
 " Open a new instance of st with the cwd
 nnoremap \t :tabe<CR>:-tabmove<CR>:term sh -c 'st'<CR><C-\><C-N>:q<CR>
 " Opening a terminal window
-nnoremap <LEADER>/ :set splitbelow<CR>:split<CR>:res +10<CR>:term<CR>
+nnoremap <c-\> :term<CR>
 " nnoremap <LEADER>b- :b#<CR>
 nnoremap <a--> :b#<CR>
 
@@ -391,7 +412,7 @@ else
 endif
 
 
-if IsOnweriVrmc
+if IsOwneriVrmc
   if has('nvim')
   else
 
@@ -415,5 +436,22 @@ if IsOnweriVrmc
 
     source ~/.vim/vim/user/interestingWords.vim
     source ~/.vim/vim/user/fzf.vim
+  endif
+else
+  if IsFindOwnerVimrcDir
+  execute 'noremap <leader>rc :e ' . OwnerVimrcDir . '/.vimrc<CR>'
+  noremap <leader>rb :e $HOME/.bashrc<CR>
+  execute 'source ' . OwnerVimrcDir . '/.vim/vim/explorer.vim'
+    execute 'source ' . OwnerVimrcDir . '/.vim/vim/buffer.vim'
+  let &rtp= OwnerVimrcDir . '/.vim' . ',' . &rtp
+  if empty(glob(OwnerVimrcDir.'/.vim/plugged/vim-airline/plugin/airline.vim')) || use_custom_statusline
+    execute 'source ' . OwnerVimrcDir . '/.vim/vim/statusline.vim'
+  endif
+    if !empty(glob(OwnerVimrcDir.'/.vim/autoload/plug.vim')) && use_plugins
+      execute 'source ' . OwnerVimrcDir . '/.vim/vim/plugins.vim'
+      execute 'source ' . OwnerVimrcDir . '/.vim/vim/opt.vim'
+      execute 'source ' . OwnerVimrcDir . '/.vim/vim/keymap.vim'
+      execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/interestingWords.vim'
+    endif
   endif
 endif
