@@ -22,15 +22,15 @@ let g:taboo_renamed_tab_format = "[%l]"
 " You can check for clipboard support in Vim by running
 " 'vim --version' and looking for options like 'xterm_clipboard'.
 if (!has('nvim') && !has('clipboard_working')) && version >= 801
-	vmap y <Plug>OSCYankVisual
-	let s:VimOSCYankPostRegisters = ['', '+', '*']
-	function! s:VimOSCYankPostCallback(event)
-		if a:event.operator == 'y' && index(s:VimOSCYankPostRegisters, a:event.regname) != -1
-			call OSCYankRegister(a:event.regname)
-		endif
-	endfunction
-	augroup VimOSCYankPost
-		autocmd!
-		autocmd TextYankPost * call s:VimOSCYankPostCallback(v:event)
-	augroup END
+  vmap y <Plug>OSCYankVisual
+  let s:VimOSCYankPostRegisters = ['', '+', '*']
+  function! s:VimOSCYankPostCallback(event)
+    if a:event.operator == 'y' && index(s:VimOSCYankPostRegisters, a:event.regname) != -1
+      call OSCYankRegister(a:event.regname)
+    endif
+  endfunction
+  augroup VimOSCYankPost
+    autocmd!
+    autocmd TextYankPost * call s:VimOSCYankPostCallback(v:event)
+  augroup END
 endif
