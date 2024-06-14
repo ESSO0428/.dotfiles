@@ -1,28 +1,29 @@
 " ==================== Auto load for first time uses ====================
+" for other server user can add alias uvim="vim -N -u /home/Andy6/" to .bashrc (can use my keymap not plug mode; ref function! IsOnweriVrmc) <if this .vimrc not in your directory but in my>
 map <esc>[1;5D <C-Left>
 map <esc>[1;5C <C-Right>
 function! s:metacode(key, clear)
   if a:clear
-    exec "set <M-".a:key.">="
+  exec "set <M-".a:key.">="
   else
-    exec "set <M-".a:key.">=\e".a:key
+  exec "set <M-".a:key.">=\e".a:key
   endif
 endfunc
 
 function! s:set_meta(clear)
   for i in range(10)
-    call s:metacode(nr2char(char2nr('0') + i), a:clear)
+  call s:metacode(nr2char(char2nr('0') + i), a:clear)
   endfor
   for i in range(26)
-    call s:metacode(nr2char(char2nr('a') + i), a:clear)
-    let t = nr2char(char2nr('A') + i)
-    call s:metacode(t, a:clear)
+  call s:metacode(nr2char(char2nr('a') + i), a:clear)
+  let t = nr2char(char2nr('A') + i)
+  call s:metacode(t, a:clear)
   endfor
   for c in [',', '.', '/', ';', '{', '}','\']
-    call s:metacode(c, a:clear)
+  call s:metacode(c, a:clear)
   endfor
   for c in ['?', ':', '-', '_', '+', '=', "'"]
-    call s:metacode(c, a:clear)
+  call s:metacode(c, a:clear)
   endfor
 endfunction
 
@@ -31,11 +32,11 @@ call s:set_meta(0)
 
 function! s:auto_meta(clear)
   if &bt == 'terminal'
-    if a:clear
-      call s:set_meta(1)
-    else
-      call s:set_meta(0)
-    endif
+  if a:clear
+    call s:set_meta(1)
+  else
+    call s:set_meta(0)
+  endif
   endif
 endfunction
 
@@ -45,9 +46,9 @@ augroup TermMeta
   autocmd WinLeave * call <sid>auto_meta(0)
 augroup END
 fu s:fix_terminal_readline() abort
-    for key in map(range(char2nr('a'), char2nr('z')) + range(char2nr('A'), char2nr('Z')), 'nr2char(v:val)')
-        exe 'tno <m-' .. key .. '> <esc>' .. key
-    endfor
+  for key in map(range(char2nr('a'), char2nr('z')) + range(char2nr('A'), char2nr('Z')), 'nr2char(v:val)')
+    exe 'tno <m-' .. key .. '> <esc>' .. key
+  endfor
 endfu
 call s:fix_terminal_readline()
 
@@ -55,10 +56,21 @@ let use_custom_statusline = 0
 let use_plugins = 1
 
 let g:MYVIMRC="$HOME/.vimrc"
-if empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
-  silent !curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs
-    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+function! IsOnweriVrmc()
+  for arg in v:argv
+    if arg == '-u'
+      return v:false
+    endif
+  endfor
+  return v:true
+endfunction
+let IsOnweriVrmc = IsOnweriVrmc()
+if IsOnweriVrmc
+   if empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
+     silent !curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs
+           \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+     autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+   endif
 endif
 
 set hidden
@@ -102,9 +114,9 @@ nnoremap <leader>dfW :diffoff!<cr>
 nnoremap <leader>dfs :set scrollbind!<cr>
 nnoremap <leader>dfe :widno set noscrollbind<cr>
 autocmd BufRead,BufNewFile *.md inoremap <buffer> ,, <++>
-            \| inoremap <buffer> ,c ```<++>```<CR><CR><++><Esc>2ki<CR><Esc>f>a<CR><Esc>2k$a
-            \| inoremap <buffer> ,f <Esc>/<++><CR>:nohlsearch<CR>"_c4l
-            \| inoremap <buffer> ,b `<++>`<Esc>F`a
+      \| inoremap <buffer> ,c ```<++>```<CR><CR><++><Esc>2ki<CR><Esc>f>a<CR><Esc>2k$a
+      \| inoremap <buffer> ,f <Esc>/<++><CR>:nohlsearch<CR>"_c4l
+      \| inoremap <buffer> ,b `<++>`<Esc>F`a
 
 
 hi NonText ctermfg=gray guifg=#414348
@@ -188,19 +200,17 @@ nnoremap <a-d> <c-a>
 
 nnoremap <a-v> <c-v>
 inoremap <c-v> <c-r>+
-cnoremap <c-v> <c-r>+
 nnoremap <c-v> p
-
 
 nnoremap <c-o> 10<C-E>
 nnoremap <c-u> 10<C-Y>
 " ==================== Cursor Movement ====================
 " New cursor movement (the default arrow keys are used for resizing windows)
-"     ^
-"     i
+"   ^
+"   i
 " < j   l >
-"     k
-"     v
+"   k
+"   v
 
 " normal keyborad
 noremap <silent> i k
@@ -253,8 +263,8 @@ nnoremap <leader>d<c-w> :bd!<CR>
 " colemak keyboard
 " noremap <LEADER>w <C-w>w
 if version >= 801
-	tnoremap <c-n> <C-w>N
-endif	
+  tnoremap <c-n> <C-w>N
+endif  
 
 " noremap <LEADER>u <C-w>k
 " noremap <LEADER>e <C-w>j
@@ -352,7 +362,7 @@ nnoremap <a-\> :tabclose<CR>
 " Open a new instance of st with the cwd
 nnoremap \t :tabe<CR>:-tabmove<CR>:term sh -c 'st'<CR><C-\><C-N>:q<CR>
 " Opening a terminal window
-nnoremap <c-\> :term<CR>
+nnoremap <LEADER>/ :set splitbelow<CR>:split<CR>:res +10<CR>:term<CR>
 " nnoremap <LEADER>b- :b#<CR>
 nnoremap <a--> :b#<CR>
 
@@ -381,27 +391,29 @@ else
 endif
 
 
-if has('nvim')
-else
+if IsOnweriVrmc
+  if has('nvim')
+  else
 
-  noremap <leader>rc :e $HOME/.vimrc<CR>
-  noremap <leader>rb :e $HOME/.bashrc<CR>
+    noremap <leader>rc :e $HOME/.vimrc<CR>
+    noremap <leader>rb :e $HOME/.bashrc<CR>
 
-  source ~/.vim/vim/explorer.vim
-  source ~/.vim/vim/buffer.vim
+    source ~/.vim/vim/explorer.vim
+    source ~/.vim/vim/buffer.vim
 
-  if empty(glob($HOME.'/.vim/plugged/vim-airline/plugin/airline.vim')) || use_custom_statusline
-	source ~/.vim/vim/statusline.vim
+    if empty(glob($HOME.'/.vim/plugged/vim-airline/plugin/airline.vim')) || use_custom_statusline
+      source ~/.vim/vim/statusline.vim
+    endif
+
   endif
 
-endif
+  if !empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
+    source ~/.vim/vim/plugins.vim
 
-if !empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
-  source ~/.vim/vim/plugins.vim
+    source ~/.vim/vim/opt.vim
+    source ~/.vim/vim/keymap.vim
 
-  source ~/.vim/vim/opt.vim
-  source ~/.vim/vim/keymap.vim
-
-  source ~/.vim/vim/user/interestingWords.vim
-  source ~/.vim/vim/user/fzf.vim
+    source ~/.vim/vim/user/interestingWords.vim
+    source ~/.vim/vim/user/fzf.vim
+  endif
 endif
