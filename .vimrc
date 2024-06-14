@@ -439,9 +439,9 @@ if IsOwneriVrmc
   endif
 else
   if IsFindOwnerVimrcDir
-  execute 'noremap <leader>rc :e ' . OwnerVimrcDir . '/.vimrc<CR>'
-  noremap <leader>rb :e $HOME/.bashrc<CR>
-  execute 'source ' . OwnerVimrcDir . '/.vim/vim/explorer.vim'
+    execute 'noremap <leader>rc :e ' . OwnerVimrcDir . '/.vimrc<CR>'
+    noremap <leader>rb :e $HOME/.bashrc<CR>
+    execute 'source ' . OwnerVimrcDir . '/.vim/vim/explorer.vim'
     execute 'source ' . OwnerVimrcDir . '/.vim/vim/buffer.vim'
   let &rtp= OwnerVimrcDir . '/.vim' . ',' . &rtp
   if empty(glob(OwnerVimrcDir.'/.vim/plugged/vim-airline/plugin/airline.vim')) || use_custom_statusline
@@ -452,6 +452,7 @@ else
       execute 'source ' . OwnerVimrcDir . '/.vim/vim/opt.vim'
       execute 'source ' . OwnerVimrcDir . '/.vim/vim/keymap.vim'
       execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/interestingWords.vim'
+      execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/fzf.vim'
     endif
   endif
 endif
