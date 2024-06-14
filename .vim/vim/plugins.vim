@@ -8,9 +8,6 @@ call plug#begin()
   "   - Avoid using standard Vim directory names like 'plugin'
 
   " Make sure you use single quotes
-
-  Plug 'gcmt/taboo.vim'
-
   if version >= 801
     Plug 'jayli/vim-easycomplete'
     Plug 'tpope/vim-obsession'
@@ -20,7 +17,13 @@ call plug#begin()
 
   Plug 'lfv89/vim-interestingwords'
   Plug 'tpope/vim-surround'
-  Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+  if IsOwneriVrmc
+	  Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+  else
+	  if IsFindOwnerVimrcDir
+	    Plug 'junegunn/fzf', { 'dir': OwnerVimrcDir . '/.fzf' }
+	  endif
+  endif
   Plug 'junegunn/fzf.vim'
   Plug 'vim-airline/vim-airline'
   Plug 'vim-airline/vim-airline-themes'
