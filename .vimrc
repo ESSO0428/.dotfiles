@@ -188,7 +188,9 @@ nnoremap <a-d> <c-a>
 
 nnoremap <a-v> <c-v>
 inoremap <c-v> <c-r>+
+cnoremap <c-v> <c-r>+
 nnoremap <c-v> p
+
 
 nnoremap <c-o> 10<C-E>
 nnoremap <c-u> 10<C-Y>
@@ -350,7 +352,7 @@ nnoremap <a-\> :tabclose<CR>
 " Open a new instance of st with the cwd
 nnoremap \t :tabe<CR>:-tabmove<CR>:term sh -c 'st'<CR><C-\><C-N>:q<CR>
 " Opening a terminal window
-nnoremap <LEADER>/ :set splitbelow<CR>:split<CR>:res +10<CR>:term<CR>
+nnoremap <c-\> :term<CR>
 " nnoremap <LEADER>b- :b#<CR>
 nnoremap <a--> :b#<CR>
 
