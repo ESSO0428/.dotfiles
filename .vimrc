@@ -87,11 +87,12 @@ let IsOwneriVrmc = IsOwneriVrmc()
 let [IsFindOwnerVimrcDir, OwnerVimrcDir] = GetVimrcDir()
 
 if IsOwneriVrmc
-   if empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
-     silent !curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs
-           \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-     autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
-   endif
+  if empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
+    silent !curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs
+        \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+	call system('chmod o+rx -R ' . expand('$HOME') . '/.vim/autoload')
+  endif
 endif
 
 set hidden
@@ -421,50 +422,31 @@ else
   let &t_EI = "\e[2 q"
 endif
 
+let UserVimrcDir=$HOME
+if IsFindOwnerVimrcDir
+ let UserVimrcDir = OwnerVimrcDir
+ let &rtp = OwnerVimrcDir . '/.vim' . ',' . &rtp
+endif
 
-if IsOwneriVrmc
-  if has('nvim')
-  else
-
-    noremap <leader>rc :e $HOME/.vimrc<CR>
-    noremap <leader>rb :e $HOME/.bashrc<CR>
-
-    source ~/.vim/vim/explorer.vim
-    source ~/.vim/vim/buffer.vim
-
-    if empty(glob($HOME.'/.vim/plugged/vim-airline/plugin/airline.vim')) || use_custom_statusline
-      source ~/.vim/vim/statusline.vim
-    endif
-
-  endif
-
-  if !empty(glob($HOME.'/.vim/autoload/plug.vim')) && use_plugins
-    source ~/.vim/vim/plugins.vim
-
-    source ~/.vim/vim/opt.vim
-    source ~/.vim/vim/keymap.vim
-
-    source ~/.vim/vim/user/interestingWords.vim
-    source ~/.vim/vim/user/fold-cycling.vim
-    source ~/.vim/vim/user/fzf.vim
-  endif
+if has('nvim')
 else
-  if IsFindOwnerVimrcDir
-    execute 'noremap <leader>rc :e ' . OwnerVimrcDir . '/.vimrc<CR>'
-    noremap <leader>rb :e $HOME/.bashrc<CR>
-    execute 'source ' . OwnerVimrcDir . '/.vim/vim/explorer.vim'
-    execute 'source ' . OwnerVimrcDir . '/.vim/vim/buffer.vim'
-  let &rtp= OwnerVimrcDir . '/.vim' . ',' . &rtp
-  if empty(glob(OwnerVimrcDir.'/.vim/plugged/vim-airline/plugin/airline.vim')) || use_custom_statusline
-    execute 'source ' . OwnerVimrcDir . '/.vim/vim/statusline.vim'
+  execute 'noremap <leader>rc :e '.UserVimrcDir.'/.vimrc<CR>'
+  noremap <leader>rb :e $HOME/.bashrc<CR>
+  execute 'source '.UserVimrcDir.'/'.'.vim/vim/explorer.vim'
+  execute 'source '.UserVimrcDir.'/'.'.vim/vim/buffer.vim'
+
+  if empty(glob(UserVimrcDir.'/'.'.vim/plugged/vim-airline/plugin/airline.vim')) || use_custom_statusline
+    execute 'source '.UserVimrcDir.'/'.'.vim/vim/statusline.vim'
   endif
-    if !empty(glob(OwnerVimrcDir.'/.vim/autoload/plug.vim')) && use_plugins
-      execute 'source ' . OwnerVimrcDir . '/.vim/vim/plugins.vim'
-      execute 'source ' . OwnerVimrcDir . '/.vim/vim/opt.vim'
-      execute 'source ' . OwnerVimrcDir . '/.vim/vim/keymap.vim'
-      execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/interestingWords.vim'
-      execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/fold-cycling.vim'
-      execute 'source ' . OwnerVimrcDir . '/.vim/vim/user/fzf.vim'
-    endif
+
+  if !empty(glob(UserVimrcDir.'/'.'.vim/autoload/plug.vim')) && use_plugins
+    execute 'source '.UserVimrcDir.'/'.'.vim/vim/plugins.vim'
+  
+    execute 'source '.UserVimrcDir.'/'.'.vim/vim/opt.vim'
+    execute 'source '.UserVimrcDir.'/'.'.vim/vim/keymap.vim'
+  
+    execute 'source '.UserVimrcDir.'/'.'.vim/vim/user/interestingWords.vim'
+    execute 'source '.UserVimrcDir.'/'.'.vim/vim/user/fold-cycling.vim'
+    execute 'source '.UserVimrcDir.'/'.'.vim/vim/user/fzf.vim'
   endif
 endif
