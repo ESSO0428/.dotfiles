@@ -4,6 +4,7 @@
 " <if this .vimrc not in your directory but in my>
 map <esc>[1;5D <C-Left>
 map <esc>[1;5C <C-Right>
+vnoremap <nowait> <Esc> <Esc>
 function! s:metacode(key, clear)
   if a:clear
   exec "set <M-".a:key.">="
@@ -411,6 +412,63 @@ function DeleteHiddenBuffers() " Vim with the 'hidden' option
 endfunction
 command! DeleteHiddenBuffers call DeleteHiddenBuffers()
 nnoremap <leader>bc :DeleteHiddenBuffers<cr>
+
+function! SetWrapKeymaps()
+  if exists('b:venn_enabled') && b:venn_enabled
+    return
+  endif
+  if &wrap
+    " 如果 wrap 為 true
+    nnoremap <buffer><silent> i gk
+    nnoremap <buffer><silent> k gj
+    nnoremap <buffer><silent> I 5gk
+    nnoremap <buffer><silent> K 5gj
+    nnoremap <buffer><silent> J g0
+    nnoremap <buffer><silent> L g$
+
+    " vnoremap <buffer><silent> i gk
+    " vnoremap <buffer><silent> i gk
+    " vnoremap <buffer><silent> k gj
+    " vnoremap <buffer><silent> I 5gk
+    " vnoremap <buffer><silent> K 5gj
+    " vnoremap <buffer><silent> J g0
+    " vnoremap <buffer><silent> L g$
+    " nowait (solution for the delay problem when plugin conflict)
+    vnoremap <buffer><silent><nowait> i gk
+    vnoremap <buffer><silent><nowait> k gj
+    vnoremap <buffer><silent><nowait> I 5gk
+    vnoremap <buffer><silent><nowait> K 5gj
+    vnoremap <buffer><silent><nowait> J g0
+    vnoremap <buffer><silent><nowait> L g$
+  else
+    " 如果 wrap 為 false
+    nnoremap <buffer><silent> i k
+    nnoremap <buffer><silent> k j
+    nnoremap <buffer><silent> I 5k
+    nnoremap <buffer><silent> K 5j
+    nnoremap <buffer><silent> J 0
+    nnoremap <buffer><silent> L $
+
+    " vnoremap <buffer><silent> i k
+    " vnoremap <buffer><silent> k j
+    " vnoremap <buffer><silent> I 5k
+    " vnoremap <buffer><silent> K 5j
+    " vnoremap <buffer><silent> J 0
+    " vnoremap <buffer><silent> L $
+    " nowait (solution for the delay problem when plugin conflict)
+    vnoremap <buffer><silent><nowait> i k
+    vnoremap <buffer><silent><nowait> k j
+    vnoremap <buffer><silent><nowait> I 5k
+    vnoremap <buffer><silent><nowait> K 5j
+    vnoremap <buffer><silent><nowait> J 0
+    vnoremap <buffer><silent><nowait> L $
+  endif
+endfunction
+
+" 每次切換緩衝區或打開新文件時執行 SetWrapKeymaps 函數
+autocmd BufEnter * call SetWrapKeymaps()
+autocmd OptionSet wrap call SetWrapKeymaps()
+
 
 if exists('$TMUX')
   " let &t_SI = "\<Esc>Ptmux;\<Esc>\e[5 q\<Esc>\\"
