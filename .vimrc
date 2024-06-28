@@ -35,11 +35,11 @@ call s:set_meta(0)
 
 function! s:auto_meta(clear)
   if &bt == 'terminal'
-  if a:clear
-    call s:set_meta(1)
-  else
-    call s:set_meta(0)
-  endif
+    if a:clear
+      call s:set_meta(1)
+    else
+      call s:set_meta(0)
+    endif
   endif
 endfunction
 
@@ -71,12 +71,12 @@ endfunction
 function! GetVimrcDir()
   let vimrc_path = ""
   let found_u = v:false
-for i in range(1, len(v:argv) - 1)
-  if v:argv[i] == '-u'
-  let vimrc_path = v:argv[i + 1]
-  let found_u = v:true
-  break
-  endif
+  for i in range(1, len(v:argv) - 1)
+    if v:argv[i] == '-u'
+      let vimrc_path = v:argv[i + 1]
+      let found_u = v:true
+      break
+    endif
   endfor
 
   let vimrc_dir = fnamemodify(vimrc_path, ':p:h')
@@ -144,7 +144,7 @@ autocmd BufRead,BufNewFile *.md inoremap <buffer> ,, <++>
 
 
 hi NonText ctermfg=gray guifg=#414348
-
+hi Visual cterm=reverse gui=reverse
 
 set guifont=Courier\ New:h30
 nnoremap Q :qa<CR>
@@ -468,6 +468,10 @@ endfunction
 " 每次切換緩衝區或打開新文件時執行 SetWrapKeymaps 函數
 autocmd BufEnter * call SetWrapKeymaps()
 autocmd OptionSet wrap call SetWrapKeymaps()
+
+nnoremap <a-q> :copen<cr>
+nnoremap <leader>[ :cprevious<cr>
+nnoremap <leader>] :cnext<cr>
 
 
 if exists('$TMUX')
