@@ -12,12 +12,12 @@ let g:fold_cycle_toggle_max_open  = 1
 let g:fold_cycle_toggle_max_close = 1
 
 function! Vscode_like_foldLevel_enhance(n)
-  " 关闭所有折叠
+  " close all fold
   normal [g
   let l:folds_to_open = a:n - 1
   if l:folds_to_open >= 1
     for i in range(1, l:folds_to_open)
- 	  " 使用 <Plug>(fold-cycle-open) 打开折叠
+ 	  " use <Plug>(fold-cycle-open) open fold
  	  normal ]f
     endfor
   endif
