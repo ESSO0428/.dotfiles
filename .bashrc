@@ -303,6 +303,13 @@ passwordless_ssh () {
 
 ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
   arg1=$1
+
+  # 检测是否在 WSL 环境中
+  if ! grep -qiE "(microsoft|WSL)" /proc/sys/kernel/osrelease &>/dev/null; then
+    echo "[ERROR] This script is designed to run within a WSL environment."
+    return 1
+  fi
+
   passwordless_ssh $arg1 || retun 0
   # 取出不包含帳號的存 ip
   extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
