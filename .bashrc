@@ -105,6 +105,12 @@ code_cli() {
 }
 
 
+# command for wsl for every source bashrc
+# update_ssh_hostnames() {
+#   awk '/^Host / { hostname=$2 } /^\tHostName / { print hostname " " $2 }' ~/.ssh/config > ~/.ssh/host_names
+# }
+# update_ssh_hostnames
+
 # sshfs tool
 safe_sshfs() {
   # 取得參數
@@ -227,6 +233,103 @@ j2ssh(){
   j2remote
   j2c
 }
+
+passwordless_ssh () {
+  # 取得參數
+  arg1=$1
+
+  public_key_check_and_generate () {
+    if [ ! -f ~/.ssh/id_rsa.pub ]; then
+      echo "Public key does not exist, generate a new one? (y/n)"
+      read answer
+      if [ "$answer" = "y" ]; then
+        ssh-keygen
+        if [ $? -ne 0 ]; then
+          echo "Failed to generate public key."
+          return 1
+        fi
+        
+        # 设置权限
+        chmod 700 ~/.ssh
+        chmod 600 ~/.ssh/id_rsa
+        chmod 644 ~/.ssh/id_rsa.pub
+        echo "SSH public key has been generated and permissions set."
+      else
+        echo "Skipping public key generation."
+      fi
+    fi
+  }
+  passwordless_is_not_ok () {
+    passwordless_check_command="ssh -o BatchMode=yes $remote_address"
+    if echo $passwordless_check_command | sh >/dev/null; then
+      echo "$remote_address is already passwordless."
+      return 0
+    fi
+    return 1
+  }
+  # 判斷參數是否為 alias
+  if [[ $# == 1 ]]; then
+    if [[ $(alias `echo "$arg1"`) ]]; then
+      # 取得 IP
+      remote_ip=$(alias `echo "$arg1"` | awk '{print $NF}' | sed "s/['\"]//g")
+      # 驗證 IP 是否合法，避免 command injection
+      if ! echo "$remote_ip" | grep -E '^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+$' >/dev/null; then
+        echo "[ERROR] remote_ip is not valid"
+        return
+      fi
+
+      if [[ $(alias `echo "$arg1"`) == *"-p"* ]]; then
+        # 取出 -p 後的值
+        port_arg=$(alias `echo "$arg1"` | awk -F "-p" '{print $2}' | awk '{print "-p " $1}')
+      else
+        # 沒有 port 則輸出空字串
+        port_arg=""
+      fi
+      # 輸出轉換後的字串
+      # echo "$port_arg ${remote_ip}"
+      remote_address="$port_arg $remote_ip"
+      
+      # 檢查公私鑰是否生成
+      public_key_check_and_generate || return 1
+      # 檢查先前是否已設定好免登
+      passwordless_is_not_ok && return 0
+
+
+      target_remote_authorized_key_command="mkdir -p ~/.ssh ; cat >> ~/.ssh/authorized_keys"
+      local_rsa_pub_path=~/.ssh/id_rsa.pub
+      passwordless_command="ssh $remote_address \"$target_remote_authorized_key_command\" < $local_rsa_pub_path"
+      echo "execute passwordless command : $passwordless_command"
+      echo $passwordless_command | sh
+    else
+      echo "[ERROR] not register ssh address to bashrc"
+    fi
+  else
+    echo "[ERROR] Please input : passwordless_ssh sshalias"
+  fi
+}
+
+ls_ssh_tools() {
+  # 定义忽略清单
+  ignoreList=(
+    "mount.sshfs" "start-ssh-pageant.cmd"
+    "ssh-add.exe" "dask-ssh.exe" "sshd"
+    "ssh-keygen.exe" "mount.fuse.sshfs"
+    "ssh-agent.exe" "ssh-add" "ssh-argv0"
+    "dask-ssh-script.py" "dask-ssh" "ssh-agent"
+    "ssh-shellhost.exe" "libssh2.dll"
+    "ssh-import-id-gh" "ssh.exe"
+    "ssh-import-id-lp" "start-ssh-agent.cmd"
+    "sshd.exe" "sshd_config_default" "ssh-copy-id"
+    "ssh-import-id" "ssh-keyscan.exe" "prompt_ssh"
+    "instant_prompt_ssh"
+  )
+
+  # 将忽略清单用 | 合并成一个正则表达式
+  ignorePattern=$(IFS="|"; echo "${ignoreList[*]}")
+  # 获取所有命令并过滤掉忽略清单中的条目，且排除以 _ 开头的条目，然后筛选出包含 ssh 或 sshfs 的命令
+  compgen -c | grep -Ev "^($ignorePattern)$" | grep -Ev '^_' | grep -E 'ssh|sshfs'
+}
+
 
 # if [[ "$0" == "bash" ]]; then
 #   [[ -z $TMUX ]] || conda deactivate; conda activate base
