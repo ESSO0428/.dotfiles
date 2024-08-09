@@ -104,13 +104,6 @@ code_cli() {
   fi
 }
 
-
-# command for wsl for every source bashrc
-# update_ssh_hostnames() {
-#   awk '/^Host / { hostname=$2 } /^\tHostName / { print hostname " " $2 }' ~/.ssh/config > ~/.ssh/host_names
-# }
-# update_ssh_hostnames
-
 # sshfs tool
 safe_sshfs() {
   # 取得參數
@@ -307,6 +300,18 @@ passwordless_ssh () {
     echo "[ERROR] Please input : passwordless_ssh sshalias"
   fi
 }
+
+ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
+  arg1=$1
+  passwordless_ssh $arg1 || retun 0
+  # 取出不包含帳號的存 ip
+  extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
+  sync_sshcofing_command="
+    grep -P '^Host \w+|HostName \d+' /mnt/c/Users/$(wslvar USERNAME)/.ssh/config | paste - - | awk '{print \$2, \$4}' | grep $extract_ip_from_remote_ip | ssh $remote_address 'cat - > ~/.ssh/host_names'
+  "
+  echo $sync_sshcofing_command | sh
+}
+# ex : ssh_sshconfig_sync_remote_for_nvim_intergration_vscode sshdp
 
 ls_ssh_tools() {
   # 定义忽略清单
