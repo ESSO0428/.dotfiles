@@ -1,10 +1,16 @@
 " ==================== Auto load for first time uses ====================
-" for other server user can add alias uvim="vim -N -u /home/Andy6/" to .bashrc
+" for other server user can add alias uvim="vim -N -u /home/Andy6/.vimrc" to .bashrc
 " (can use my local config <inculde plug and keymap> IsOnweriVrmc) 
 " <if this .vimrc not in your directory but in my>
-map <esc>[1;5D <C-Left>
-map <esc>[1;5C <C-Right>
+nmap <esc>[1;5D <C-Left>
+nmap <esc>[1;5C <C-Right>
 vnoremap <nowait> <Esc> <Esc>
+
+cmap <esc>OH <home>
+imap <esc>OH <home>
+cmap <esc>OF <end>
+imap <esc>OF <end>
+
 function! s:metacode(key, clear)
   if a:clear
   exec "set <M-".a:key.">="
