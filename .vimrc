@@ -6,6 +6,8 @@ nmap <esc>[1;5D <C-Left>
 nmap <esc>[1;5C <C-Right>
 vnoremap <nowait> <Esc> <Esc>
 
+tmap <c-v> <C-W>"+
+
 cmap <esc>OH <home>
 imap <esc>OH <home>
 cmap <esc>OF <end>
