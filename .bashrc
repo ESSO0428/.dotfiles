@@ -264,9 +264,16 @@ passwordless_ssh () {
   if [[ $# == 1 ]]; then
     if [[ $(alias `echo "$arg1"`) ]]; then
       # 取得 IP
-      remote_ip=$(alias `echo "$arg1"` | awk '{print $NF}' | sed "s/['\"]//g")
+      # remote_ip=$(alias `echo "$arg1"` | awk '{print $NF}' | sed "s/['\"]//g")
+      if alias `echo "$arg1"` | grep -q "\-J"; then
+        remote_jump_target_ip=$(alias `echo "$arg1"` | awk '{print $NF}' | sed "s/['\"]//g")
+        remote_ip=$(alias `echo "$arg1"` | awk '{print $(NF-1)}' | sed "s/['\"]//g")
+      else
+        remote_ip=$(alias `echo "$arg1"` | awk '{print $NF}' | sed "s/['\"]//g")
+      fi
       # 驗證 IP 是否合法，避免 command injection
       if ! echo "$remote_ip" | grep -E '^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+$' >/dev/null; then
+        echo $remote_ip
         echo "[ERROR] remote_ip is not valid"
         return
       fi
@@ -293,17 +300,20 @@ passwordless_ssh () {
       passwordless_command="ssh $remote_address \"$target_remote_authorized_key_command\" < $local_rsa_pub_path"
       echo "execute passwordless command : $passwordless_command"
       echo $passwordless_command | sh
+      return 0
     else
       echo "[ERROR] not register ssh address to bashrc"
+      return 1
     fi
   else
     echo "[ERROR] Please input : passwordless_ssh sshalias"
+    return 1
   fi
 }
 
 ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
   arg1=$1
-
+  
   # 检测是否在 WSL 环境中
   if ! grep -qiE "(microsoft|WSL)" /proc/sys/kernel/osrelease &>/dev/null; then
     echo "[ERROR] This script is designed to run within a WSL environment."
@@ -312,7 +322,12 @@ ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
 
   passwordless_ssh $arg1 || retun 0
   # 取出不包含帳號的存 ip
-  extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
+  # extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
+  if alias `echo "$arg1"` | grep -q "\-J"; then
+    extract_ip_from_remote_ip=$(echo $remote_jump_target_ip | awk -F@ '{print $2}')
+  else
+    extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
+  fi
   sync_sshcofing_command="
     grep -P '^Host \w+|HostName \d+' /mnt/c/Users/$(wslvar USERNAME)/.ssh/config | paste - - | awk '{print \$2, \$4}' | grep $extract_ip_from_remote_ip | ssh $remote_address 'cat - > ~/.ssh/host_names'
   "
@@ -342,6 +357,12 @@ ls_ssh_tools() {
   compgen -c | grep -Ev "^($ignorePattern)$" | grep -Ev '^_' | grep -E 'ssh|sshfs'
 }
 
+# reference ssh alias 
+# alias sshdp="ssh -Y -C Andy6@192.168.X.XX"
+# alias sshweb="ssh -p 22177 -Y -C webadm@192.168.X.XXX"
+## jump ssh alias
+# alias sshlab121="ssh -Y -C Andy6@192.168.X.XXX"
+# alias sshlab27="ssh -Y -C -J Andy6@192.168.X.XXX Andy6@192.168.OO.OO"
 
 # if [[ "$0" == "bash" ]]; then
 #   [[ -z $TMUX ]] || conda deactivate; conda activate base
