@@ -110,39 +110,70 @@ safe_sshfs() {
   arg1=$1
   local_dir_path=$2
 
+  # 判斷參數是否為 alias 並檢查是否包含 ":"
+  if [[ $# == 2 && $arg1 != *":"* ]]; then
+    echo "[WARNING] Please input : sshalias:/path/ local_path"
+    echo -n "Do you want to use '~/ (safesshfs sshalias: local_path) as the default path? [y/n]: "
+    read -r choice
+    if [[ "$choice" =~ ^[yY]([eE][sS])?$ ]]; then
+      arg1="${arg1}:"
+    else
+      echo "[ERROR] Operation cancelled. Please input a valid remote path."
+      return 1
+    fi
+  fi
+
   # 判斷參數是否為 alias
   if [[ $# == 2 && $arg1 == *":"* ]]; then
-    if [[ $(alias `echo "$arg1" | awk -F: '{print $1}'`) ]]; then
-      # 取得 IP
-      remote_ip=$(which `echo "$arg1" | awk -F: '{print $1}'` | awk '{print $NF}')
+    if alias_name=$(alias `echo "$arg1" | awk -F: '{print $1}'` 2>/dev/null); then
+      
+      # 检查是否存在 -J 选项
+      if echo "$alias_name" | grep -q "\-J"; then
+        # 提取跳板机地址和最终目标地址
+        remote_jump_target_ip=$(echo "$alias_name" | awk '{print $NF}' | sed "s/['\"]//g")
+        remote_ip=$(echo "$alias_name" | awk '{print $(NF-1)}' | sed "s/['\"]//g")
+      else
+        # 仅有最终目标地址
+        remote_ip=$(echo "$alias_name" | awk '{print $NF}' | sed "s/['\"]//g")
+      fi
+
       # 取得 path
       remote_path=$(echo "$arg1" | awk -F: '{print $NF}')
 
-      if [[ $(alias `echo "$arg1" | awk -F: '{print $1}'`) == *"-p"* ]]; then
-        # 取出 -p 後的值
-        port_arg=$(alias `echo "$arg1" | awk -F: '{print $1}'` | awk -F "-p" '{print $2}' | awk '{print "-p " $1}')
+      # 檢查是否存在 port 設定
+      if echo "$alias_name" | grep -q "\-p"; then
+        port_arg=$(echo "$alias_name" | awk -F "-p" '{print $2}' | awk '{print "-p " $1}')
       else
-        # 沒有 port 則輸出空字串
         port_arg=""
       fi
-      # 輸出轉換後的字串
-      # echo "$port_arg ${remote_ip}:${remote_path}"
-      remote_address="$remote_ip:$remote_path"
+
+      # 構建完整的 sshfs 命令
+      if [[ ! -z "$remote_jump_target_ip" ]]; then
+        sshfs_command="sshfs -o ProxyJump=${remote_ip} $port_arg ${remote_jump_target_ip}:${remote_path} $local_dir_path"
+      else
+        sshfs_command="sshfs $port_arg ${remote_ip}:${remote_path} $local_dir_path"
+      fi
+
+      # 確保本地掛載點存在
       if [[ ! -e $local_dir_path ]]; then
         mkdir -p $local_dir_path 
         chattr +i $local_dir_path 
       fi
+
+      # 如果掛載點是空的，執行 sshfs 掛載
       if [ -z "$(ls -A $local_dir_path)" ]; then
-        sshfs $port_arg $remote_address $local_dir_path 
+        eval "$sshfs_command"
       fi
-      echo "sshfs link create sucess ..."
-      echo "sshfs (Remote) => $remote_address $port_arg"
+
+      echo "sshfs link create success ..."
+      echo "sshfs (Remote) => $remote_ip:$remote_path $port_arg"
       echo "sshfs (local)  => $local_dir_path"
     else
       echo "[ERROR] not register ssh address to bashrc"
     fi
   else
-    echo "[ERROR] Please input : sshalias:/path/ local_path"
+    echo "[ERROR] Invalid input. Please check your input format."
+    echo "Please input : passwordless_ssh sshalias"
   fi
 }
 unlink_sshfs(){
