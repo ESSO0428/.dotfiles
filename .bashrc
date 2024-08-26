@@ -394,6 +394,7 @@ ls_ssh_tools() {
 ## jump ssh alias
 # alias sshlab121="ssh -Y -C Andy6@192.168.X.XXX"
 # alias sshlab27="ssh -Y -C -J Andy6@192.168.X.XXX Andy6@192.168.OO.OO"
+# alias sshremotelab_lab121="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX Andy6@192.168.X.XXX"
 
 # if [[ "$0" == "bash" ]]; then
 #   [[ -z $TMUX ]] || conda deactivate; conda activate base
