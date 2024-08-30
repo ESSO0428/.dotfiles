@@ -189,8 +189,8 @@ vnoremap <silent> <LEADER>Od zO
 
 nnoremap <silent> [{ zk
 nnoremap <silent> ]} zj
-nnoremap <silent> <c-[> zk
-nnoremap <silent> <c-]> zj
+nnoremap <silent> <a-[> zk
+nnoremap <silent> <a-]> zj
 
 
 nnoremap o o<ESC>
