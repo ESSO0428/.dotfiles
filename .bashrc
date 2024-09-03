@@ -149,9 +149,9 @@ safe_sshfs() {
 
       # 構建完整的 sshfs 命令
       if [[ ! -z "$remote_jump_target_ip" ]]; then
-        sshfs_command="sshfs -o ProxyJump=${remote_ip} $port_arg ${remote_jump_target_ip}:${remote_path} $local_dir_path"
+        sshfs_command="sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ProxyJump=${remote_ip} $port_arg ${remote_jump_target_ip}:${remote_path} $local_dir_path"
       else
-        sshfs_command="sshfs $port_arg ${remote_ip}:${remote_path} $local_dir_path"
+        sshfs_command="sshfs -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 $port_arg ${remote_ip}:${remote_path} $local_dir_path"
       fi
 
       # 確保本地掛載點存在
@@ -202,14 +202,27 @@ j2remote() {
     [ -n "$port_command" ] && port_command="-p $port_command"
 
     local command_line=$(echo "$line" | sed 's/-p [0-9]*//')
-    local ssh_address_info=$(echo "$command_line" | awk '{print $6}')
+    command_line=$(echo "$command_line" | sed 's/,ProxyJump=/ -J /')
+    command_line=$(echo "$command_line" | sed 's/-o [^ ]* //')
+
+    local jump_command=$(echo "$command_line" | awk '{for(i=1;i<=NF;i++) if($i=="-J") print $(i+1)}' | sed 's/-J //')
+    [ -n "$jump_command" ] && jump_command="-J $jump_command"
+    
+    if echo "$command_line" | grep -q "\-J"; then
+      local ssh_address_info=$(echo "$command_line" | awk '{print $8}')
+      local local_mount_point=$(echo "$command_line" | awk '{print $9}')
+    else
+      local ssh_address_info=$(echo "$command_line" | awk '{print $6}')
+      local local_mount_point=$(echo "$command_line" | awk '{print $7}')
+    fi
     local ssh_address=${ssh_address_info%%:*}
     local work_dir=${ssh_address_info#*:}
-    local local_mount_point=$(echo "$command_line" | awk '{print $7}')
+    [ -z "$work_dir" ] && work_dir="~"
+
 
     if [[ "$current_dir" == "$local_mount_point"* ]]; then
       local sub_dir=${current_dir#$local_mount_point}
-      ssh_cmd="ssh -t -Y ${port_command} ${ssh_address} \"cd ${work_dir}${sub_dir} ; bash --login\""
+      ssh_cmd="ssh -t -Y -C ${port_command} ${jump_command} ${ssh_address} \"cd ${work_dir}${sub_dir} ; bash --login\""
       break
     fi
   done <<< "$sshfs_mounts"
