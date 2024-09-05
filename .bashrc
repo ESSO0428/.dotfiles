@@ -405,9 +405,14 @@ ls_ssh_tools() {
 # alias sshdp="ssh -Y -C Andy6@192.168.X.XX"
 # alias sshweb="ssh -p 22177 -Y -C webadm@192.168.X.XXX"
 ## jump ssh alias
-# alias sshlab121="ssh -Y -C Andy6@192.168.X.XXX"
-# alias sshlab27="ssh -Y -C -J Andy6@192.168.X.XXX Andy6@192.168.OO.OO"
-# alias sshremotelab_lab121="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX Andy6@192.168.X.XXX"
+# alias sshlab121="ssh -Y -C Andy6@192.168.X.121"
+# alias sshlab27="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.27"
+# alias sshlab28="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.28"
+# alias sshlab29="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.29"
+# alias sshremotelab_lab121="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX Andy6@192.168.X.121"
+# alias sshremotelab_laba27="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.27"
+# alias sshremotelab_laba28="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.28"
+# alias sshremotelab_laba29="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.29"
 
 # if [[ "$0" == "bash" ]]; then
 #   [[ -z $TMUX ]] || conda deactivate; conda activate base
