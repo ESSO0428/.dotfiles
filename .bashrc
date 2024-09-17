@@ -414,10 +414,22 @@ ls_ssh_tools() {
 # alias sshremotelab_laba28="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.28"
 # alias sshremotelab_laba29="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.29"
 
-# if [[ "$0" == "bash" ]]; then
-#   [[ -z $TMUX ]] || conda deactivate; conda activate base
-#   export NVM_DIR="$HOME/.nvm"
-#   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-#   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-#   [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+# NOTE: nvm activate command please add to ~/.bashrc
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# # nvm use XXXX
+# [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+# NOTE: modfiy the ~/.profile or ~/.bash_profile
+# For activate nvm in zsh (and attention .zshrc  have source ~/.bashrc for load above nvm activate command)
+#
+# Before:
+# if [ "$BASH" ]; then
+#   if [ -f ~/.bashrc ]; then
+#     . ~/.bashrc
+#   fi
 # fi
+#
+# After:
+# exec zsh
+# mesg n 2> /dev/null || true
