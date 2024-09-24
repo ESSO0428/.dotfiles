@@ -82,6 +82,7 @@ find_available_ports() {
   while [[ $port -le $end_port ]]; do
     if ! [[ $(netstat -tl | grep ":$port") ]] && ! [[ " ${exclude_ports[@]} " =~ " $port " ]]; then
       available_ports+=($port)
+      exclude_ports+=($port)
       return  # 找到可用端口后立即退出函数
     fi
     ((port++))
@@ -91,13 +92,20 @@ find_available_ports() {
 # 為每個SSH連接建立反向隧道和ncat監聽
 echo "$ssh_connections" | while read line; do
   # 從SSH命令中提取server_ip
+  port_arg=""
   if echo "$line" | grep -q " -J "; then
     server_ip=$(echo "$line" | awk -F'-J ' '{print $2}' | awk -F'-' '{print $1}')
-    server_ip=$(printf " -J %s" "$server_ip")
+    server_ip=$(printf -- "-J %s" "$server_ip")
   else
-    server_ip=$(echo $line | awk '{print $NF}')
+    server_ip=$line
+    if echo "$line" | grep -q " -p "; then
+      port_arg=$(echo $line | awk -F'-p ' '{print $2}')
+      port_arg=$(printf -- "-p %s" "$port_arg")
+      sed_command=$(printf "s/%s//" "$port_arg")
+      server_ip=$(echo "$server_ip" | sed -E "$sed_command")
+    fi
+    server_ip=$(echo $server_ip | awk '{print $NF}')
   fi
-  ssh -f "${server_ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1
 
   # 檢查此IP是否已經被處理過
   if [[ -z "${processed_ips[$server_ip]}" ]]; then
@@ -114,7 +122,7 @@ echo "$ssh_connections" | while read line; do
     available_ports=("${available_ports[@]:1}")
 
     # 打印並執行命令
-    ssh_cmd="ssh $ssh_options -fNR $port_to_use:localhost:$port_to_use $server_ip"
+    ssh_cmd="ssh $ssh_options -fNR $port_to_use:localhost:$port_to_use $server_ip $port_arg"
     echo "Running: $ssh_cmd"
     $ssh_cmd >/dev/null 2>&1 || continue
 
@@ -123,8 +131,7 @@ echo "$ssh_connections" | while read line; do
     $ncat_cmd &
 
     # 將端口號寫入到遠端的~/.rssh_tunnel文件中
-    ssh "${server_ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1 && \
-      ssh $server_ip "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1 &
+    ssh -f $server_ip "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1
 
     # 标记服务器IP为已处理
     processed_ips[$server_ip]=1
