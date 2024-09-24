@@ -91,7 +91,13 @@ find_available_ports() {
 # 為每個SSH連接建立反向隧道和ncat監聽
 echo "$ssh_connections" | while read line; do
   # 從SSH命令中提取server_ip
-  server_ip=$(echo $line | awk '{print $NF}')
+  if echo "$line" | grep -q " -J "; then
+    server_ip=$(echo "$line" | awk -F'-J ' '{print $2}' | awk -F'-' '{print $1}')
+    server_ip=$(printf " -J %s" "$server_ip")
+  else
+    server_ip=$(echo $line | awk '{print $NF}')
+  fi
+  ssh -f "${server_ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1
 
   # 檢查此IP是否已經被處理過
   if [[ -z "${processed_ips[$server_ip]}" ]]; then
@@ -128,7 +134,7 @@ done
 # 檢查是否提供了'--slient'參數
 if [[ "$1" != "--silent" ]]; then
   echo '-----------------------------------------------------'
-  echo "Press Ctrl+C to close \"ssh -fNR\" and \"ncat\" process ..."
+  echo "Press Ctrl+C to close \"ssh -fNR\" and \"nat\" process ..."
 
   # 保持腳本運行，直到用戶按下Ctrl+C
   while true; do
