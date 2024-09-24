@@ -134,7 +134,7 @@ done
 # 檢查是否提供了'--slient'參數
 if [[ "$1" != "--silent" ]]; then
   echo '-----------------------------------------------------'
-  echo "Press Ctrl+C to close \"ssh -fNR\" and \"nat\" process ..."
+  echo "Press Ctrl+C to close \"ssh -fNR\" and \"ncat\" process ..."
 
   # 保持腳本運行，直到用戶按下Ctrl+C
   while true; do
