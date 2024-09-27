@@ -80,17 +80,30 @@ find_available_ports() {
   local port=$start_port
 
   while [[ $port -le $end_port ]]; do
+    # 1. 檢查本地主機上的端口是否可用
     if ! [[ $(netstat -tl | grep ":$port") ]] && ! [[ " ${exclude_ports[@]} " =~ " $port " ]]; then
-      available_ports+=($port)
-      exclude_ports+=($port)
-      return  # 找到可用端口后立即退出函数
+      # 2. 檢查遠端主機上的端口是否可用
+      remote_address_port_available_ck_command="ssh $ssh_command_args netstat -tuln | grep ':${port} '"
+      if ! eval $remote_address_port_available_ck_command >/dev/null 2>&1; then
+        # 加入可用端口列表
+        available_ports+=($port)
+        # 加入排除列表，避免重複使用
+        exclude_ports+=($port)
+        # 找到可用端口后立即退出函数
+        return
+      fi
     fi
     ((port++))
   done
 }
 
+# 將 ssh_connections 寫入到文件描述符 3
+exec 3<<< "$ssh_connections"
+
 # 為每個SSH連接建立反向隧道和ncat監聽
-echo "$ssh_connections" | while read line; do
+while read -r line <&3; do
+  ssh_command_args=$(echo "$line" | awk '{for (i=12; i<=NF; i++) printf $i " "; print ""}')
+  ssh_command_args=$(echo "$ssh_command_args" | sed -E 's/-Y -C//' | sed -E 's/-Y//' | sed -E 's/-C//' | sed -E 's/-YC//' | sed -E 's/-CY//')
   # 從SSH命令中提取server_ip
   port_arg=""
   if echo "$line" | grep -q " -J "; then
@@ -126,12 +139,12 @@ echo "$ssh_connections" | while read line; do
     echo "Running: $ssh_cmd"
     $ssh_cmd >/dev/null 2>&1 || continue
 
-    ncat_cmd="ncat -l --keep-open $port_to_use -e /bin/bash"
+    ncat_cmd="ncat -l --keep-open $port_to_use -e /bin/sh"
     echo "Running: $ncat_cmd"
     $ncat_cmd &
 
     # 將端口號寫入到遠端的~/.rssh_tunnel文件中
-    ssh -f $server_ip "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1
+    ssh -f $server_ip $port_arg "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1
 
     # 标记服务器IP为已处理
     processed_ips[$server_ip]=1
