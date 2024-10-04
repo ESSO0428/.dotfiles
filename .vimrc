@@ -139,6 +139,11 @@ set shiftwidth=4
 set softtabstop=4
 set autoindent
 
+
+set splitright
+set splitbelow
+
+
 let mapleader=" "
 nnoremap <leader>dft :diffthis<cr>
 nnoremap <leader>dfw :diffoff<cr>
@@ -153,6 +158,7 @@ autocmd BufRead,BufNewFile *.md inoremap <buffer> ,, <++>
 
 hi NonText ctermfg=gray guifg=#414348
 hi Visual cterm=reverse gui=reverse
+
 
 set guifont=Courier\ New:h30
 nnoremap Q :qa<CR>
