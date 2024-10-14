@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # NOTE: tmux config
 mv ~/.tmux/.tmux.conf ~/.tmux/.tmux.conf.old
 mv ~/.tmux.conf.local ~/.tmux.conf.local.old
