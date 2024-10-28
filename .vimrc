@@ -142,6 +142,7 @@ set autoindent
 
 set splitright
 set splitbelow
+set noequalalways
 
 
 let mapleader=" "
