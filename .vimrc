@@ -496,6 +496,8 @@ nnoremap <a-q> :copen<cr>
 nnoremap <leader>[ :cprevious<cr>
 nnoremap <leader>] :cnext<cr>
 
+" NOTE: Ensure cursor style matches Normal mode on the welcome screen by briefly entering Command-line mode
+autocmd VimEnter * silent normal :<ESC>
 
 if exists('$TMUX')
   " let &t_SI = "\<Esc>Ptmux;\<Esc>\e[5 q\<Esc>\\"
