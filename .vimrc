@@ -164,6 +164,8 @@ hi LineNr ctermfg=244
 hi CursorLine cterm=none ctermbg=236 ctermfg=none
 hi CursorLineNr term=bold cterm=none ctermfg=226 gui=bold guifg=Brown
 
+hi Folded ctermfg=14 ctermbg=242
+
 
 set guifont=Courier\ New:h30
 nnoremap Q :qa<CR>
