@@ -160,6 +160,10 @@ autocmd BufRead,BufNewFile *.md inoremap <buffer> ,, <++>
 hi NonText ctermfg=gray guifg=#414348
 hi Visual cterm=reverse gui=reverse
 
+hi LineNr ctermfg=244
+hi CursorLine cterm=none ctermbg=236 ctermfg=none
+hi CursorLineNr term=bold cterm=none ctermfg=226 gui=bold guifg=Brown
+
 
 set guifont=Courier\ New:h30
 nnoremap Q :qa<CR>
