@@ -251,6 +251,27 @@ nnoremap <c-v> p
 
 nnoremap <c-o> 10<C-E>
 nnoremap <c-u> 10<C-Y>
+
+" ==================== spell ====================
+nnoremap s,G zG
+nnoremap s,g zg
+nnoremap s,w zw
+nnoremap s,W zW
+nnoremap s,uw zuw
+nnoremap s,ug zug
+nnoremap s,uW zuW
+nnoremap s,uG zuG
+nnoremap s,= z=
+vnoremap s,G zG
+vnoremap s,g zg
+vnoremap s,w zw
+vnoremap s,W zW
+vnoremap s,uw zuw
+vnoremap s,ug zug
+vnoremap s,uW zuW
+vnoremap s,uG zuG
+vnoremap s,= z=
+
 " ==================== Cursor Movement ====================
 " New cursor movement (the default arrow keys are used for resizing windows)
 "   ^
