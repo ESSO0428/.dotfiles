@@ -49,6 +49,15 @@ nvm use 20
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# disable immediate git status display for avoid generating too many zsh processes
+# see: https://github.com/romkatv/powerlevel10k/issues/823
+typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
+# remove azure, gcloud, google_app_cred from right prompt for avoid generating too many zsh processes
+# POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(${${(s: :)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS}//(azure|gcloud|google_app_cred)/})
+P9K_EXCLUDE_ELEMENTS=(azure gcloud google_app_cred)
+P9K_EXCLUDE_ELEMENTS="${(j:|:)P9K_EXCLUDE_ELEMENTS}"
+typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(${${(s: :)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS}:#${~P9K_EXCLUDE_ELEMENTS}})
+
 # warning inhibition (Optional) 
-# typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
-# typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
