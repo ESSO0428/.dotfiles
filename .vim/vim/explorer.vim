@@ -40,4 +40,17 @@ function! NetrwMapping()
    noremap <buffer> I 5k
    " noremap <buffer> l <Plug>NetrwLocalBrowseCheck
    nmap <buffer> l <cr>
+   nmap <buffer> a %
+   nmap <buffer> A d
+   nmap <buffer> r R
+
+   nmap <buffer> s <Nop>
+   nmap <nowait><buffer> q :q<CR>
+   nmap <buffer> <a-l> v
+   nmap <buffer> <a-k> o
+
+   nnoremap <silent><buffer> si :set nosplitbelow<CR>:split<CR>:set splitbelow<CR>
+   nnoremap <silent><buffer> sk :set splitbelow<CR>:split<CR>
+   nnoremap <silent><buffer> sj :set nosplitright<CR>:vsplit<CR>:set splitright<CR>
+   nnoremap <silent><buffer> sl :set splitright<CR>:vsplit<CR>
 endfunction
