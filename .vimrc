@@ -351,17 +351,16 @@ noremap <LEADER>n <C-w><C-p>
 " Disable the default s key
 noremap s <nop>
 " split the screens to up (horizontal), down (horizontal), left (vertical), right (vertical)
-" colemak keyboard
-" noremap su :set nosplitbelow<CR>:split<CR>:set splitbelow<CR>
-" noremap se :set splitbelow<CR>:split<CR>
-" noremap sn :set nosplitright<CR>:vsplit<CR>:set splitright<CR>
-" noremap si :set splitright<CR>:vsplit<CR>
+nnoremap si :above split<cr>
+nnoremap sk :below split<cr>
+nnoremap sj :leftabove vsplit<cr>
+nnoremap sl :rightbelow vsplit<cr>
 
-" normal keyboard
-noremap si :set nosplitbelow<CR>:split<CR>:set splitbelow<CR>
-noremap sk :set splitbelow<CR>:split<CR>
-noremap sj :set nosplitright<CR>:vsplit<CR>:set splitright<CR>
-noremap sl :set splitright<CR>:vsplit<CR>
+nnoremap sI :wincmd K<cr>
+nnoremap sK :wincmd J<cr>
+nnoremap sJ :wincmd H<cr>
+nnoremap sL :wincmd L<cr>
+nnoremap sT :wincmd T<cr>
 
 " Resize splits with arrow keys
 noremap <up> :res +5<CR>
