@@ -313,10 +313,11 @@ passwordless_ssh () {
         remote_jump_target_ip=$(alias `echo "$arg1"` | awk '{print $NF}' | sed "s/['\"]//g")
         remote_ip=$(alias `echo "$arg1"` | awk '{print $(NF-1)}' | sed "s/['\"]//g")
       else
-        remote_ip=$(alias `echo "$arg1"` | awk '{print $NF}' | sed "s/['\"]//g")
+        remote_ip=$(alias `echo "$arg1"` | awk '{sub(/ -p [0-9]+/,"");print}' | awk '{print $NF}' | sed "s/['\"]//g")
       fi
-      # 驗證 IP 是否合法，避免 command injection
-      if ! echo "$remote_ip" | grep -E '^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+$' >/dev/null; then
+      
+      # 驗證 IP 是否合法，避免 command injection (透過 tr 可以用於檢測逗點分隔的跳板機 ip 是否合法)
+      if ! echo "$remote_ip" | tr ',' ' ' | xargs -n1 | grep -E '^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-:]+$' >/dev/null; then
         echo $remote_ip
         echo "[ERROR] remote_ip is not valid"
         return
@@ -324,14 +325,19 @@ passwordless_ssh () {
 
       if [[ $(alias `echo "$arg1"`) == *"-p"* ]]; then
         # 取出 -p 後的值
-        port_arg=$(alias `echo "$arg1"` | awk -F "-p" '{print $2}' | awk '{print "-p " $1}')
+        port_arg=$(alias `echo "$arg1"` | awk -F "-p" '{print $2}' | awk '{print "-p " $1}' | sed "s/['\"]//g")
       else
         # 沒有 port 則輸出空字串
         port_arg=""
       fi
+      
       # 輸出轉換後的字串
       # echo "$port_arg ${remote_ip}"
-      remote_address="$port_arg $remote_ip"
+      if alias `echo "$arg1"` | grep -q "\-J"; then
+        remote_address="$port_arg -J $remote_ip $remote_jump_target_ip"
+      else
+        remote_address="$port_arg $remote_ip"
+      fi
       
       # 檢查公私鑰是否生成
       public_key_check_and_generate || return 1
@@ -355,6 +361,8 @@ passwordless_ssh () {
   fi
 }
 
+# `apt install wslu`, for wslvar
+# References: https://wslu.wedotstud.io/wslu/zh-TW/install.html
 ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
   arg1=$1
   
