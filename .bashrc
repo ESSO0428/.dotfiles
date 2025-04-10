@@ -381,7 +381,7 @@ ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
     extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
   fi
   sync_sshconfing_command="
-    grep -P '^Host \w+|HostName \d+' /mnt/c/Users/$(wslvar USERNAME)/.ssh/config | paste - - | awk '{print \$2, \$4}' | grep $extract_ip_from_remote_ip | ssh $remote_address 'cat - > ~/.ssh/host_names'
+    grep -P '^Host [a-zA-Z0-9.-:]+|HostName [a-zA-Z0-9.-:]+' /mnt/c/Users/Ncblabboss/.ssh/config | tr -d '\r' | sed 's/^[ \t]*//' | paste - - | awk '{print \$2, \$4}' | grep $extract_ip_from_remote_ip | ssh $remote_address 'cat - > ~/.ssh/host_names'
   "
   echo $sync_sshconfing_command | sh
 }
