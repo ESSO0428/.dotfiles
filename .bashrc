@@ -372,7 +372,7 @@ ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
     return 1
   fi
 
-  passwordless_ssh $arg1 || retun 0
+  passwordless_ssh $arg1 || return 0
   # 取出不包含帳號的存 ip
   # extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
   if alias `echo "$arg1"` | grep -q "\-J"; then
@@ -380,10 +380,10 @@ ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
   else
     extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
   fi
-  sync_sshcofing_command="
+  sync_sshconfing_command="
     grep -P '^Host \w+|HostName \d+' /mnt/c/Users/$(wslvar USERNAME)/.ssh/config | paste - - | awk '{print \$2, \$4}' | grep $extract_ip_from_remote_ip | ssh $remote_address 'cat - > ~/.ssh/host_names'
   "
-  echo $sync_sshcofing_command | sh
+  echo $sync_sshconfing_command | sh
 }
 # ex : ssh_sshconfig_sync_remote_for_nvim_intergration_vscode sshdp
 
