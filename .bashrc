@@ -1,3 +1,6 @@
+# NOTE: Return early during non-interactive sessions (e.g., scp file transfer)
+[[ $- == *i* ]] || return
+
 # export LIBGL_ALWAYS_INDIRECT=1
 export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0.0
 export DISPLAY=:0
