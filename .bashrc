@@ -30,7 +30,6 @@ export FZF_DEFAULT_COMMAND="fd --type file"
 # wsl
 # export FZF_DEFAULT_OPTS="--no-mouse --bind 'alt-j:preview-down,alt-k:preview-up' --height 40% --layout=reverse --preview '([[ -f {} ]] && (bat --color=\"always\" --theme=\"Visual Studio Dark+\" {} || cat {})) || ([[ -d {} ]] && (tree -C {} | head -200)) || echo {} 2> /dev/null | head -200' --bind 'alt-d:toggle-preview,f1:execute(notepad++.exe {}),f2:execute(code {})'"
 export FZF_DEFAULT_OPTS="--no-mouse --bind 'ctrl-o:preview-down,ctrl-u:preview-up'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'ctrl-s:down,ctrl-w:up'"
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'alt-k:down,alt-i:up'"
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'tab:toggle-out,shift-tab:toggle-in'"
 FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'alt-d:toggle-preview'"
