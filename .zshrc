@@ -1,3 +1,6 @@
+# NOTE: Set cursor style to blinking beam
+printf '\033[5 q'
+
 export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0.0
 export DISPLAY=:0
 
