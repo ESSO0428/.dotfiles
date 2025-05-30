@@ -116,7 +116,7 @@ set clipboard=unnamedplus
 set backspace=indent,eol,start
 " Allow <Backspace> to delete indentation, end of line, and characters (shorthand)
 set backspace=2
-autocmd VimLeave * silent !echo -ne "\e[6 q"
+autocmd VimLeave * silent !echo -ne "\e[5 q"
 syntax enable
 " for i in range(97,122)
 "   let c = nr2char(i)
