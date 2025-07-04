@@ -8,14 +8,26 @@ date: Saturday, September 23, 2023
 
 <!--toc:start-->
 - [My dotfiles](#my-dotfiles)
-  - [Rc Files](#rc-files)
+  - [Rc Files, `.profile` or other dotfiles](#rc-files-profile-or-other-dotfiles)
   - [Tools](#tools)
 <!--toc:end-->
 
-## Rc Files
+## Rc Files, `.profile` or other dotfiles
 
-`.bashrc`, `.zshrc` for reference shell env setting files
-`./.ssh/config` is reference ssh config file
+`.bashrc`, `.zshrc` for reference shell environment setting files
+`./.ssh/config` is a reference ssh config file
+
+> [!IMPORTANT]
+> 
+> Reference `.profile` config and **special attention** below config to `.profile`
+> ```bash
+> if [[ $- != *i* ]]; then
+>   return
+> fi
+> # ...
+> exec zsh # # only exec zsh or zsh related code in interactive shell to avoid breaking other tools
+> ```
+> The above code prevents zsh or zsh-related code from affecting other IDEs (ex: VSCode, JetBrains IDEs) when using remote ssh connections
 
 ## Tools
 
