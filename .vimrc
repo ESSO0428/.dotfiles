@@ -222,6 +222,8 @@ noremap U ddk
 " noremap <c-y> yyp
 nnoremap <a-i> <c-u>
 nnoremap <a-k> <c-d>
+nnoremap _ <c-o>
+nnoremap + <c-i>
 nnoremap <c-d> yyp
 " nmap < <<CR>
 " nmap > ><CR>
