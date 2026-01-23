@@ -13,6 +13,9 @@ imap <esc>OH <home>
 cmap <esc>OF <end>
 imap <esc>OF <end>
 
+" HACK: Use '/' in netrw to prevent tree view breaking on Windows after 'x'
+set shellslash
+
 function! s:metacode(key, clear)
   if a:clear
   exec "set <M-".a:key.">="
