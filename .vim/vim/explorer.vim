@@ -72,6 +72,14 @@ function! NetrwXOpen() abort
   endif
 endfunction
 
+function! CleanUselessBuffers()
+  for buf in getbufinfo()
+    if buf.name ==# "" && buf.changed == 0 && buf.loaded == 1
+      execute ':bdelete ' . buf.bufnr
+    endif
+  endfor
+endfunction
+
 function! ToggleLex()
   " Keep your original cleanup behavior
   call CleanUselessBuffers()
