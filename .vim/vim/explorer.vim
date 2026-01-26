@@ -1,5 +1,43 @@
 let g:netrw_liststyle = 3
 
+function! s:OpenDir(path) abort
+  let l:p = a:path
+
+  if has('win32') || has('win64')
+    let l:p = substitute(l:p, '/', '\', 'g')
+    execute 'silent! !start explorer ' . shellescape(l:p)
+    redraw!
+    return
+  endif
+
+  if has('mac') || has('macunix')
+    execute 'silent! !open ' . shellescape(l:p)
+    redraw!
+    return
+  endif
+
+  if executable('xdg-open')
+    execute 'silent! !xdg-open ' . shellescape(l:p)
+    redraw!
+    return
+  endif
+
+  call netrw#BrowseX(l:p, 0)
+endfunction
+
+function! NetrwXOpen() abort
+  let l:target = netrw#Call('NetrwGetWord')
+
+  let l:path = netrw#Call('NetrwBrowseChgDir', 1, l:target, 0)
+
+  if isdirectory(l:path)
+    call s:OpenDir(l:path)
+    return
+  endif
+
+  call netrw#BrowseX(l:path, 0)
+endfunction
+
 function! CleanUselessBuffers()
   for buf in getbufinfo()
     if buf.name ==# "" && buf.changed == 0 && buf.loaded == 1
@@ -131,4 +169,6 @@ function! NetrwMapping()
   " Mouse: single click enters directories; double click opens files/dirs
   nnoremap <silent><buffer> <LeftMouse>    :call <SID>NetrwMouseOpen(1)<CR>
   nnoremap <silent><buffer> <2-LeftMouse>  :call <SID>NetrwMouseOpen(2)<CR>
+
+  nnoremap <silent><buffer> x :call NetrwXOpen()<CR>
 endfunction
