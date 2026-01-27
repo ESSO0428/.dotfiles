@@ -164,9 +164,13 @@ autocmd BufRead,BufNewFile *.md inoremap <buffer> ,, <++>
       \| inoremap <buffer> ,b `<++>`<Esc>F`a
 
 
+if version < 900
+  colorscheme elflord
+endif
 hi NonText ctermfg=gray guifg=#414348
 hi Visual cterm=reverse gui=reverse
 
+hi Constant term=underline ctermfg=13 guifg=#ffa0a0
 hi LineNr ctermfg=244
 hi CursorLine cterm=none ctermbg=236 ctermfg=none
 hi CursorLineNr term=bold cterm=none ctermfg=226 gui=bold guifg=Brown
