@@ -554,6 +554,7 @@ else
   noremap <leader>rb :e $HOME/.bashrc<CR>
   execute 'source '.UserVimrcDir.'/'.'.vim/vim/explorer.vim'
   execute 'source '.UserVimrcDir.'/'.'.vim/vim/buffer.vim'
+  execute 'source '.UserVimrcDir.'/'.'.vim/vim/encoding.vim'
 
   if empty(glob(UserVimrcDir.'/'.'.vim/plugged/vim-airline/plugin/airline.vim')) || use_custom_statusline
     execute 'source '.UserVimrcDir.'/'.'.vim/vim/statusline.vim'
