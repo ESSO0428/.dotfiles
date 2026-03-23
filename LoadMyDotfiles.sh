@@ -28,4 +28,3 @@ chmod +x ~/bin/ssh-tunnel-manager
 chmod +x ~/bin/reverse-ssh-tunnel-manager
 
 chmod +x ~/.config/ranger/
-
