@@ -158,9 +158,4 @@ vim.api.nvim_create_user_command("ToggleSassWatch", toggle_sass_auto_compile, {}
 
 -- 创建一个 Neovim 命令来调用这个函数
 vim.api.nvim_create_user_command("CodeRunner", code_runner, {})
-local map = function(keys, func, desc, mode)
-  mode = mode or "n"
-  vim.keymap.set(mode, keys, func, { desc = "LSP: " .. desc })
-end
--- lvim.keys.normal_mode["<leader>rr"] = "<cmd>CodeRunner<cr>"
-map("<leader>rr", "<cmd>CodeRunner<cr>", "CodeRunner")
+Nvim.keys.normal_mode["<leader>rr"] = { "<cmd>CodeRunner<cr>", desc = "CodeRunner" }
