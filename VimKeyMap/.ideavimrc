@@ -253,8 +253,8 @@ nnoremap <LEADER>q :q<CR>
 " other
 nnoremap gi ?# \{0,1\}%%<CR>
 nnoremap gk /# \{0,1\}%%<CR>
-nnoremap <c-u> 10<c-y>
-nnoremap <c-o> 10<c-e>
+nnoremap <c-u> <c-y>
+nnoremap <c-o> <c-e>
 
 " IDE
 set keep-english-in-normal
