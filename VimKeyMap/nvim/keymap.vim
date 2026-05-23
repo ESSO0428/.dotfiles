@@ -132,11 +132,11 @@ vnoremap Y "+y
 nnoremap Y y$
 nnoremap <silent>gy :let @+ = expand('%:p')<CR>
 
-" Find pair
-nnoremap g{ %
-vnoremap g{ %
-nnoremap g} $%
-vnoremap g} $%
+" H M L
+nnoremap g{ H
+vnoremap g{ H
+nnoremap g} L
+vnoremap g} L
 
 " Search
 nnoremap <LEADER><CR> :nohlsearch<CR>

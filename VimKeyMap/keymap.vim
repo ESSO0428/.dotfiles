@@ -18,11 +18,11 @@ noremap H I
 vnoremap Y "+y
 nnoremap Y y$
 
-" Find pair
-nnoremap g{ %
-vnoremap g{ %
-nnoremap g} $%
-vnoremap g} $%
+" H M L
+nnoremap g{ H
+vnoremap g{ H
+nnoremap g} L
+vnoremap g} L
 
 " Search
 nnoremap <leader><CR> :nohlsearch<CR>
