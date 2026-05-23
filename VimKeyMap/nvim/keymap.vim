@@ -262,8 +262,10 @@ if has('gui_running')
     inoremap <C-V> <C-R>"
   endif
 endif
-nnoremap <c-o> <C-E>
-nnoremap <c-u> <C-Y>
+" nnoremap <c-o> <c-e>
+" nnoremap <c-u> <c-y>
+nnoremap <c-o> <c-f>
+nnoremap <c-u> <c-b>
 " ==================== Cursor Movement ====================
 " New cursor movement (the default arrow keys are used for resizing windows)
 "     ^

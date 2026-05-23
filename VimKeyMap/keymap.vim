@@ -141,8 +141,10 @@ vnoremap <silent> J g0
 nnoremap <silent> L g$
 vnoremap <silent> L g$
 
-nnoremap <C-u> <C-y>
-nnoremap <C-o> <C-e>
+" nnoremap <C-u> <C-y>
+" nnoremap <C-o> <C-e>
+nnoremap <C-u> <C-b>
+nnoremap <C-o> <C-f>
 
 " ==================== buffer control =======================
 nnoremap <c-j> :bprevious<CR>
