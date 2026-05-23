@@ -57,7 +57,7 @@ noremap H I
 vnoremap Y "+y
 nnoremap Y y$
 
-" Find pair
+" H M L
 nnoremap g{ H
 vnoremap g{ H
 nnoremap g} L
