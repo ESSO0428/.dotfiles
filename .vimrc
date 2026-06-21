@@ -195,10 +195,10 @@ noremap H I
 " Copy to system clipboard
 vnoremap Y "+y
 " Find pair
-nnoremap g{ %
-vnoremap g{ %
-nnoremap g} $%
-vnoremap g} $%
+nnoremap g{ H
+vnoremap g{ H
+nnoremap g} L
+vnoremap g} L
 " Search
 noremap <LEADER><CR> :nohlsearch<CR>
 
@@ -262,8 +262,8 @@ nnoremap <a-v> <c-v>
 inoremap <c-v> <c-r>+
 nnoremap <c-v> p
 
-nnoremap <c-o> 10<C-E>
-nnoremap <c-u> 10<C-Y>
+nnoremap <c-o> <c-f>
+nnoremap <c-u> <c-b>
 
 " ==================== spell ====================
 nnoremap s,G zG
