@@ -202,6 +202,9 @@ vnoremap g} L
 " Search
 noremap <LEADER><CR> :nohlsearch<CR>
 
+" remap z relationship keymaps
+nnoremap <leader>z z
+
 " Folding
 nnoremap <silent> <LEADER>o za
 nnoremap <silent> <LEADER>Oa zM
