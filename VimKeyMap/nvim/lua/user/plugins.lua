@@ -306,6 +306,13 @@ local plugins = {
     end,
   },
   {
+    "kazhala/close-buffers.nvim",
+    cmd = { "BDelete", "BufferLineKill", "ForceBufferLineKill" },
+    config = function()
+      require("user.config.plugins.bufferlinekill").setup()
+    end,
+  },
+  {
     "stevearc/oil.nvim",
     cmd = "Oil", -- ★ command lazy
     opts = {
