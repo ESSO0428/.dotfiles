@@ -217,8 +217,8 @@ exmap GoToNextHeading obcommand obsidian-editor-shortcuts:goToNextHeading
 " nmap gk :GoToNextHeading
 nmap &gtp& :GoToPreviousHeading<CR>
 nmap &gtn& :GoToNextHeading<CR>
-nmap gi &gtp&0
-nmap gk &gtn&0
+nmap [[ &gtp&0
+nmap ]] &gtn&0
 
 " go to github search src/main.ts (commands in id, plugin name is github repo name)
 " 有時候 plugin name 可能與 github 不同，最準確的話要查載下來的目錄名稱
@@ -240,6 +240,8 @@ nmap <Space>tm :HoverTableEditor<CR>
 nmap <C-d> yyp
 nnoremap <A-i> <C-u>
 nnoremap <A-k> <C-d>
+nnoremap <C-u> <C-b>
+nnoremap <C-o> <C-f>
 nnoremap <C-d> yyp
 nnoremap x "_x
 nnoremap <Space>d "_d
@@ -288,7 +290,7 @@ exmap surround_square_brackets surround [ ]
 exmap surround_curly_brackets surround { }
 
 " NOTE: must use 'map' and not 'nmap'
-map [[ :surround_wiki
+map [] :surround_wiki<CR>
 nunmap s
 vunmap S
 nmap s" :surround_double_quotes<CR>

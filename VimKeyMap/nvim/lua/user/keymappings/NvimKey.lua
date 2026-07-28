@@ -14,6 +14,10 @@ Nvim.keys.visual_mode["<leader>/"] =
   { "<Plug>(comment_toggle_linewise_visual)", desc = "Comment toggle linewise (visual)" }
 Nvim.keys.normal_mode["<leader>/"] = { "<Plug>(comment_toggle_linewise_current)", desc = "Comment toggle current line" }
 
+-- select text object
+Nvim.keys.normal_mode["<leader>w"] = { "viw", desc = "Visual Select Cursor World" }
+Nvim.keys.normal_mode["<leader>y"] = { "yiw", desc = "Copy Cusor World" }
+
 -- Bufferline
 Nvim.keys.normal_mode["<c-j>"] = { "<cmd>BufferLineCyclePrev<cr>", desc = "Bufferline Prev Buffer" }
 Nvim.keys.normal_mode["<c-l>"] = { "<cmd>BufferLineCycleNext<cr>", desc = "Bufferline Next Buffer" }
