@@ -1,75 +1,233 @@
-# Define the paths and corresponding files
-$paths = @{
-    [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments), "Obsidian Vault") = ".obsidian.vimrc"
-    [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData), "nvim") = "nvim/"
-    [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile), ".ideavimrc") = ".ideavimrc"
-    [System.IO.Path]::Combine([Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile), "keymap.vim") = "keymap.vim"
+# Resolve the current script directory
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$scriptVimKeyMapSubDir = Join-Path -Path $scriptDir -ChildPath "VimKeyMap"
+
+# Resolve the current user's OneDrive directory
+$oneDriveCandidates = @(
+    $env:OneDriveConsumer
+    $env:OneDrive
+    (Join-Path -Path $env:USERPROFILE -ChildPath "OneDrive")
+) |
+    Where-Object {
+        $_ -and (Test-Path -LiteralPath $_ -PathType Container)
+    } |
+    Select-Object -Unique
+
+$oneDriveRoot = $oneDriveCandidates | Select-Object -First 1
+
+if (-not $oneDriveRoot) {
+    throw "Unable to locate the current user's OneDrive directory."
 }
 
-# Array of files to check individually
-# $fileNames = @(".obsidian.vimrc", ".ideavimrc", "keymap.vim")
+# Check localized OneDrive application folders in priority order.
+# Stop immediately after finding the first valid remotely-save directory.
+$appFolderNames = @(
+    "應用程式"
+    "Apps"
+    "Applications"
+)
 
-# Define files and their target handling
+$remotelySavePath = $null
+
+foreach ($appFolderName in $appFolderNames) {
+    $candidatePath = Join-Path `
+        -Path $oneDriveRoot `
+        -ChildPath "$appFolderName\remotely-save"
+
+    Write-Host "Checking: $candidatePath"
+
+    if (Test-Path -LiteralPath $candidatePath -PathType Container) {
+        $remotelySavePath = $candidatePath
+
+        Write-Host "Found remotely-save directory: $remotelySavePath"
+
+        break
+    }
+}
+
+if (-not $remotelySavePath) {
+    $checkedPaths = $appFolderNames |
+        ForEach-Object {
+            Join-Path `
+                -Path $oneDriveRoot `
+                -ChildPath "$_\remotely-save"
+        }
+
+    throw (
+        "Unable to locate the remotely-save directory. Checked paths:`n" +
+        ($checkedPaths -join "`n")
+    )
+}
+
+$obsidianVaultPath = Join-Path `
+    -Path $remotelySavePath `
+    -ChildPath "Obsidian Vault"
+
+Write-Host ""
+Write-Host "OneDrive directory:       $oneDriveRoot"
+Write-Host "Remotely Save directory:  $remotelySavePath"
+Write-Host "Obsidian Vault directory: $obsidianVaultPath"
+Write-Host "------------------------------"
+
+# Define target paths and corresponding source files/directories
+$paths = [ordered]@{
+    $obsidianVaultPath = ".obsidian.vimrc"
+
+    [System.IO.Path]::Combine(
+        [Environment]::GetFolderPath(
+            [Environment+SpecialFolder]::LocalApplicationData
+        ),
+        "nvim"
+    ) = "nvim/"
+
+    [System.IO.Path]::Combine(
+        [Environment]::GetFolderPath(
+            [Environment+SpecialFolder]::UserProfile
+        ),
+        ".ideavimrc"
+    ) = ".ideavimrc"
+
+    [System.IO.Path]::Combine(
+        [Environment]::GetFolderPath(
+            [Environment+SpecialFolder]::UserProfile
+        ),
+        "keymap.vim"
+    ) = "keymap.vim"
+}
+
+# Define how each file should be copied
 $fileHandling = @{
-    ".obsidian.vimrc" = "targetToSubDir";
-    ".ideavimrc"      = "targetToDir";
+    ".obsidian.vimrc" = "targetToSubDir"
+    ".ideavimrc"      = "targetToDir"
     "keymap.vim"      = "targetToDir"
 }
 
-# Get the current script directory to use as the source path
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$scriptVimKeyMapSubDir = Join-Path -Path ($scriptDir) -ChildPath "VimKeyMap"
-
-# Check if each path exists
 foreach ($path in $paths.Keys) {
     $fileName = $paths[$path]
-    $fullFilePath = [System.IO.Path]::Combine($path, $fileName)
-    $directoryPath = $fullFilePath | Split-Path -Parent
-    
-    if (Test-Path $path) {
-        
-        # Determine handling type from fileHandling hash table
-        $handlingType = $fileHandling[$fileName]
 
-        # Prompt user for overwrite action using a switch on handling type
-        switch ($handlingType) {
-            "targetToSubDir" {
-                Write-Host "File exists: $fullFilePath"
-                $userChoice = Read-Host ("Do you want to overwrite the sub-directory file at " + $fullFilePath + "? (y[es]/n[o])")
-                $userChoice = $userChoice.ToLower()
-                if ($userChoice -eq "y" -or $userChoice -eq "yes") {
-                    Copy-Item "$scriptVimKeyMapSubDir\$fileName" $fullFilePath -Force
-                    Write-Host ("File overwritten successfully at " + $fullFilePath)
-                }
-            }
-            "targetToDir" {
-                Write-Host "File exists: $path"
-                $userChoice = Read-Host ("Do you want to overwrite the directory file at " + $path + "? (y[es]/n[o])")
-                $userChoice = $userChoice.ToLower()
-                if ($userChoice -eq "y" -or $userChoice -eq "yes") {
-                    Copy-Item "$scriptVimKeyMapSubDir\$fileName" $directoryPath -Force
-                    Write-Host ("File overwritten successfully at " + $fullFilePath)
-                }
-            }
+    # Handle the Neovim configuration directory separately
+    if ($fileName -eq "nvim/") {
+        $sourceNvimPath = Join-Path `
+            -Path $scriptVimKeyMapSubDir `
+            -ChildPath "nvim"
+
+        if (-not (Test-Path -LiteralPath $sourceNvimPath -PathType Container)) {
+            Write-Host "Source directory does not exist: $sourceNvimPath"
+            Write-Host "------------------------------"
+            continue
         }
-        if ($paths[$path] -eq "nvim/") {
-            Write-Host "Directory exists: $directoryPath"
 
-            $userChoice = Read-Host ("Do you want to completely remove and overwrite the nvim/ directory at " + $path + "? (y[es]/n[o])")
-            $userChoice = $userChoice.ToLower()  # Normalize input
+        if (Test-Path -LiteralPath $path -PathType Container) {
+            Write-Host "Directory exists: $path"
+
+            $userChoice = Read-Host (
+                "Do you want to completely remove and overwrite " +
+                "the nvim directory at $path? (y[es]/n[o])"
+            )
+
+            $userChoice = $userChoice.Trim().ToLower()
+
             if ($userChoice -eq "y" -or $userChoice -eq "yes") {
-                # Copy and overwrite the directory
-                if (Test-Path $directoryPath) {
-                    Remove-Item -Path $path -Recurse -Force
-                    Write-Host "Old nvim directory removed."
-                }
-                Copy-Item "$scriptVimKeyMapSubDir\nvim\" $path -Recurse -Force
-                Write-Host "Directory overwritten successfully."
+                Remove-Item `
+                    -LiteralPath $path `
+                    -Recurse `
+                    -Force
+
+                Write-Host "Old nvim directory removed."
+
+                Copy-Item `
+                    -LiteralPath $sourceNvimPath `
+                    -Destination $path `
+                    -Recurse `
+                    -Force
+
+                Write-Host "Directory overwritten successfully at $path"
+            } else {
+                Write-Host "Skipped: $path"
+            }
+        } else {
+            Write-Host "Directory does not exist: $path"
+        }
+
+        Write-Host "------------------------------"
+        continue
+    }
+
+    $sourceFilePath = Join-Path `
+        -Path $scriptVimKeyMapSubDir `
+        -ChildPath $fileName
+
+    $fullFilePath = Join-Path `
+        -Path $path `
+        -ChildPath $fileName
+
+    $directoryPath = Split-Path `
+        -Path $fullFilePath `
+        -Parent
+
+    if (-not (Test-Path -LiteralPath $sourceFilePath -PathType Leaf)) {
+        Write-Host "Source file does not exist: $sourceFilePath"
+        Write-Host "------------------------------"
+        continue
+    }
+
+    if (-not (Test-Path -LiteralPath $path)) {
+        Write-Host "Target path does not exist: $path"
+        Write-Host "------------------------------"
+        continue
+    }
+
+    $handlingType = $fileHandling[$fileName]
+
+    switch ($handlingType) {
+        "targetToSubDir" {
+            Write-Host "Target file: $fullFilePath"
+
+            $userChoice = Read-Host (
+                "Do you want to overwrite the file at " +
+                "$fullFilePath? (y[es]/n[o])"
+            )
+
+            $userChoice = $userChoice.Trim().ToLower()
+
+            if ($userChoice -eq "y" -or $userChoice -eq "yes") {
+                Copy-Item `
+                    -LiteralPath $sourceFilePath `
+                    -Destination $fullFilePath `
+                    -Force
+
+                Write-Host "File overwritten successfully at $fullFilePath"
+            } else {
+                Write-Host "Skipped: $fullFilePath"
             }
         }
 
-    } else {
-        Write-Host "Directory does not exist: $path"
+        "targetToDir" {
+            Write-Host "Target file: $fullFilePath"
+
+            $userChoice = Read-Host (
+                "Do you want to overwrite the file at " +
+                "$fullFilePath? (y[es]/n[o])"
+            )
+
+            $userChoice = $userChoice.Trim().ToLower()
+
+            if ($userChoice -eq "y" -or $userChoice -eq "yes") {
+                Copy-Item `
+                    -LiteralPath $sourceFilePath `
+                    -Destination $directoryPath `
+                    -Force
+
+                Write-Host "File overwritten successfully at $fullFilePath"
+            } else {
+                Write-Host "Skipped: $fullFilePath"
+            }
+        }
+
+        default {
+            Write-Host "Unknown handling type for: $fileName"
+        }
     }
+
     Write-Host "------------------------------"
 }
