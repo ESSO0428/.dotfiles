@@ -238,8 +238,8 @@ exmap HoverTableEditor obcommand markdown-table-editor:markdown-table-editor-ope
 nmap <Space>tm :HoverTableEditor<CR>
 
 nmap <C-d> yyp
-nnoremap <a-i> <c-u>
-nnoremap <a-k> <c-d>
+nnoremap <A-i> <C-u>
+nnoremap <A-k> <C-d>
 nnoremap <C-d> yyp
 nnoremap x "_x
 nnoremap <Space>d "_d
@@ -325,3 +325,9 @@ nmap <Space>tn :TabManagerPlus<CR>
 
 exmap TabLayoutSave obcommand workspaces:save
 nmap <Space>S :TabLayoutSave<CR>
+
+" zoom
+exmap zoom_in obcommand obsidian-zoom:zoom-in
+exmap zoom_out obcommand obsidian-zoom:zoom-out
+nmap <Space>Oj :zoom_in<CR>
+nmap <Space>Ol :zoom_out<CR>
