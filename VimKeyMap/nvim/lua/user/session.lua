@@ -10,50 +10,91 @@ local config_group = vim.api.nvim_create_augroup("MyConfigGroup", {}) -- A globa
 -- If Neovim just started, `vim.api.nvim_buf_delete(buffer, { force = true })` is not executed.
 -- After the first view load, the status is set to false.
 -- On subsequent session loads, unnecessary buffers are closed.
-utils.first_load = true -- Initialization flag variable
-utils.session_loading = false -- Indicates the session loading status to avoid triggering other plugins during session loading
+utils.first_load = true
+utils.session_loading = false
 function utils.load_session(filename, discard_current)
-  utils.session_loading = true
+  -- 尚未開始切換 session，先處理未儲存內容。
   if not discard_current then
-    -- Ask to save files in current session before closing them.
     for _, buffer in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_get_option_value("modified", { buf = buffer }) then
+      if vim.api.nvim_buf_is_valid(buffer) and vim.api.nvim_get_option_value("modified", { buf = buffer }) then
         local choice =
           vim.fn.confirm("The files in the current session have changed. Save changes?", "&Yes\n&No\n&Cancel")
+
         if choice == 3 or choice == 0 then
-          return -- Cancel.
-        elseif choice == 1 then
-          vim.api.nvim_command "silent wall"
+          return false
         end
+
+        if choice == 1 then
+          vim.cmd "silent wall"
+        end
+
         break
       end
     end
   end
 
-  -- Delete all buffers first except the current one to avoid entering buffers scheduled for deletion.
+  -- 從刪除舊 buffers 之前就進入 loading 狀態，
+  -- 避免 BufDelete / BufWipeout 讓 bufferline 反覆重算。
+  utils.session_loading = true
+  vim.g.session_loading = true
+
+  vim.api.nvim_exec_autocmds("User", {
+    pattern = "SessionManagerLoadPre",
+    modeline = false,
+    data = {
+      filename = filename,
+    },
+  })
+
   local current_buffer = vim.api.nvim_get_current_buf()
+
+  -- 第一次啟動自動載入時，不清除全部既有 buffers，
+  -- 保留原本針對 bufferline pinning 狀態的 workaround。
   if not utils.first_load then
     for _, buffer in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_valid(buffer) and buffer ~= current_buffer then
-        vim.api.nvim_buf_delete(buffer, { force = true })
+        pcall(vim.api.nvim_buf_delete, buffer, {
+          force = true,
+        })
       end
     end
   end
-  vim.api.nvim_buf_delete(current_buffer, { force = true })
 
-  -- Set the active session filename.
-  utils.active_session_filename = filename
+  if vim.api.nvim_buf_is_valid(current_buffer) then
+    pcall(vim.api.nvim_buf_delete, current_buffer, {
+      force = true,
+    })
+  end
 
-  local swapfile = vim.o.swapfile
-  vim.o.swapfile = false
-  vim.api.nvim_exec_autocmds("User", { pattern = "SessionLoadPre" })
-  vim.api.nvim_command("silent source " .. filename)
-  vim.api.nvim_exec_autocmds("User", { pattern = "SessionLoadPost" })
-  vim.o.swapfile = swapfile
+  local ok_source, source_err = pcall(vim.cmd, "silent source " .. vim.fn.fnameescape(filename))
 
-  -- After the first call, set the flag variable to false
-  utils.first_load = false
+  -- Post event 前先解除 loading，
+  -- bufferline 的 Post callback 才能清除快取並重繪。
   utils.session_loading = false
+  vim.g.session_loading = false
+
+  if ok_source then
+    utils.active_session_filename = filename
+    utils.first_load = false
+  end
+
+  vim.api.nvim_exec_autocmds("User", {
+    pattern = "SessionManagerLoadPost",
+    modeline = false,
+    data = {
+      success = ok_source,
+      filename = filename,
+      error = ok_source and nil or tostring(source_err),
+    },
+  })
+
+  if not ok_source then
+    vim.notify(("Failed to load session %q:\n%s"):format(filename, source_err), vim.log.levels.ERROR)
+
+    return false
+  end
+
+  return true
 end
 
 function Check_and_clear_empty_vars(vars)
