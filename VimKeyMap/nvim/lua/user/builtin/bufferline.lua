@@ -44,6 +44,63 @@ local function diagnostics_indicator(num, _, diagnostics, _)
   return #result > 0 and result or ""
 end
 
+local function jumplist_state()
+  local jumps, idx = unpack(vim.fn.getjumplist())
+
+  return {
+    back = #jumps > 0 and idx > 0,
+    forward = #jumps > 0 and idx < #jumps - 1,
+  }
+end
+
+local function jumplist_state_changed(a, b)
+  if not a or not b then
+    return true
+  end
+
+  return a.back ~= b.back or a.forward ~= b.forward
+end
+
+-----------------------------------------------------------------------
+-- Bufferline cache invalidate hook
+--
+-- 在真正的 bufferline config 載入完成後，
+-- install_bufferline_render_cache() 會覆寫這個 function。
+-----------------------------------------------------------------------
+
+_G.BufferlineCacheInvalidate = function() end
+
+-- IDE-style jumplist Back / Forward
+local function jump_and_refresh(keys)
+  local before = jumplist_state()
+
+  local termcodes = vim.api.nvim_replace_termcodes(keys, true, false, true)
+
+  vim.api.nvim_feedkeys(termcodes, "n", false)
+
+  -- feedkeys 不保證在這個 Lua function return 前完成，
+  -- 所以排到下一輪 event loop 再檢查 jumplist。
+  vim.schedule(function()
+    local after = jumplist_state()
+
+    if jumplist_state_changed(before, after) then
+      _G.BufferlineCacheInvalidate()
+    end
+  end)
+end
+
+_G.BufferlineJumpBack = function(...)
+  jump_and_refresh "<C-o>"
+end
+
+_G.BufferlineJumpForward = function(...)
+  jump_and_refresh "<C-i>"
+end
+
+vim.api.nvim_set_hl(0, "BufferLineJumpDisabled", {
+  link = "Comment",
+})
+
 Nvim.builtin.bufferline.highlights = vim.tbl_deep_extend("force", Nvim.builtin.bufferline.highlights or {}, {
   background = {
     italic = true,
@@ -64,9 +121,30 @@ Nvim.builtin.bufferline.options = vim.tbl_deep_extend("force", {
     items = {},
     options = { toggle_hidden_on_enter = true },
   },
+  custom_areas = {
+    left = function()
+      local state = jumplist_state()
+
+      return {
+        {
+          text = "%@v:lua.BufferlineJumpBack@" .. "  " .. "%X",
+          link = state.back and "Normal" or "BufferLineJumpDisabled",
+        },
+        {
+          text = "%@v:lua.BufferlineJumpForward@" .. "  " .. "%X",
+          link = state.forward and "Normal" or "BufferLineJumpDisabled",
+        },
+        {
+          text = " ",
+          link = "BufferLineFill",
+        },
+      }
+    end,
+  },
   mode = "buffers",
   numbers = "none",
-  close_command = "bdelete! %d",
+  -- close_command = "bdelete! %d",
+  close_command = "ForceBufferLineKill %d",
   right_mouse_command = "vert sbuffer %d",
   left_mouse_command = "buffer %d",
   middle_mouse_command = nil,
@@ -140,3 +218,14 @@ Nvim.builtin.bufferline.options = vim.tbl_deep_extend("force", {
   sort_by = "id",
   debug = { logging = false },
 }, Nvim.builtin.bufferline.options or {})
+
+local dap_filetypes = { "dapui_scopes", "dapui_breakpoints", "dapui_stacks", "dapui_watches" }
+
+for _, filetype in ipairs(dap_filetypes) do
+  table.insert(Nvim.builtin.bufferline.options.offsets, {
+    filetype = filetype,
+    text = "DAP",
+    highlight = "PanelHeading",
+    padding = 1,
+  })
+end

@@ -273,6 +273,10 @@ return {
         return
       end
 
+      _G.BufferlineCacheInvalidate = function()
+        invalidate_bufferline_cache(true)
+      end
+
       -- BufferLineMovePrev / BufferLineMoveNext
       --
       -- 必須先失效，再呼叫原始操作：
