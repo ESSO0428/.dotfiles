@@ -1,0 +1,55 @@
+# ~/.zshrc 範本：每台機器各自一份，不進 repo 同步
+#   新機器沒有 ~/.zshrc 時 install.sh 會複製這份；之後 conda init、nvm、fzf 等安裝程式改的都是這台自己的檔
+# 會同步的共用設定在 ~/.config/shell/：
+#   env.sh（PATH / EDITOR / DISPLAY）、omz.zsh（oh-my-zsh）、tools.sh、functions.sh、aliases.sh
+# 這台專屬：~/.tool.local（工具路徑、p10k 選項）、~/.alias.local（lab ssh alias，含真實 IP）
+
+# NOTE: Set cursor style to blinking beam
+printf '\033[5 q'
+
+# NOTE: DISPLAY 很重要（X11 視窗、剪貼簿、im-select 等都靠它）
+#   由 ~/.config/shell/env.sh 自動處理：只在 WSL 本機（且不是 ssh 進來）設 DISPLAY=:0
+#   遠端 server 不要在任何地方寫死 DISPLAY，ssh -Y / -X 會自動帶入，寫死會讓 X 轉發失效
+
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+shell_name=$(ps -p $$ -o comm=)
+SHELL=$shell_name
+
+# NOTE: PATH / EDITOR 先設好，oh-my-zsh 的 plugin 才找得到 ~/bin 裡的工具
+[ -f ~/.config/shell/env.sh ] && source ~/.config/shell/env.sh
+[ -f ~/.config/shell/omz.zsh ] && source ~/.config/shell/omz.zsh
+
+for _f in tools functions aliases; do
+  [ -f ~/.config/shell/$_f.sh ] && source ~/.config/shell/$_f.sh
+done
+unset _f
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# NOTE: conda 由 `conda init zsh` 寫入下面的區塊（它靠這兩行標記判斷是否已設定，不會重複寫入）
+#   安裝 conda 後執行 `~/anaconda3/bin/conda init zsh`，區塊內容會被換成這台的真實路徑
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+# __conda_setup="$('/root/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "/root/anaconda3/etc/profile.d/conda.sh" ]; then
+#         . "/root/anaconda3/etc/profile.d/conda.sh"
+#     else
+#         export PATH="/root/anaconda3/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
+# <<< conda initialize <<<
+# tmux 裡重新進入 base，避免沿用外層 shell 的 conda 環境
+# [[ -z $TMUX ]] || conda deactivate; conda activate base
+
+# 機器專屬設定最後載入，可覆寫上面所有東西（p10k 選項如 POWERLEVEL9K_INSTANT_PROMPT 也在這裡設）
+[ -f ~/.tool.local ] && source ~/.tool.local
+[ -f ~/.alias.local ] && source ~/.alias.local

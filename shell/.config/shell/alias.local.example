@@ -1,0 +1,18 @@
+# shellcheck shell=bash
+# ~/.alias.local 範本：各 lab 的 ssh alias（含真實 IP，不進 repo）
+# 用法：cp ~/.config/shell/alias.local.example ~/.alias.local 後填入真實位址
+# safe_sshfs / passwordless_ssh / ssh_sshconfig_sync_remote_for_nvim_intergration_vscode
+# 都是讀這些 alias 取得連線參數，格式請維持 "ssh [-p PORT] -Y -C [-J JUMP] user@host"
+
+# reference ssh alias
+# alias sshdp="ssh -Y -C Andy6@192.168.X.XX"
+# alias sshweb="ssh -p 22177 -Y -C webadm@192.168.X.XXX"
+## jump ssh alias
+# alias sshlab121="ssh -Y -C Andy6@192.168.X.121"
+# alias sshlab27="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.27"
+# alias sshlab28="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.28"
+# alias sshlab29="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.29"
+# alias sshremotelab_lab121="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX Andy6@192.168.X.121"
+# alias sshremotelab_laba27="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.27"
+# alias sshremotelab_laba28="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.28"
+# alias sshremotelab_laba29="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.29"

@@ -1,0 +1,26 @@
+{
+  "panels": {
+    "goal": {
+      "label": "Goal",
+      "entryType": "goal-state",
+      "variables": {
+        "goal.text": "目標",
+        "goal.status": "狀態",
+        "goal.tokensUsed": "已用 Token"
+      },
+      "compact": false
+    },
+    "ulw": {
+      "label": "ULW",
+      "entryType": "pi-oc-style-agent-switcher:ulw",
+      "variables": {
+        "status": {
+          "label": "狀態",
+          "valueColors": { "ON": "success" }
+        },
+        "profile": "Profile"
+      },
+      "compact": false
+    }
+  }
+}

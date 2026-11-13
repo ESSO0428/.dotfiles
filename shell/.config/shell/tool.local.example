@@ -1,0 +1,97 @@
+# shellcheck shell=bash
+# ~/.tool.local 範本：只有這台機器才成立的工具設定（不進 repo）
+# 用法：cp ~/.config/shell/tool.local.example ~/.tool.local，取消註解需要的段落
+# 載入順序：env.sh → (oh-my-zsh) → tools.sh → functions.sh → aliases.sh → (~/.p10k.zsh) → ~/.tool.local → ~/.alias.local
+# 所以這裡可以覆寫共用設定（例如 nvm 版本、PATH、p10k 選項）
+
+# ================================================================ WSL
+# --- X server
+# NOTE: WSL 本機已由 env.sh 自動設 DISPLAY=:0 與 LIBGL_ALWAYS_INDIRECT=1，這裡只在要改用其他 X server 時覆寫
+#       遠端 server 不要設，ssh -Y / -X 會自動帶入 DISPLAY
+# WSL1 (kitty and xterm etc can use)
+# export DISPLAY=127.0.0.1:0
+# WSL2 + Windows 端 X server（VcXsrv 等）
+# export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0.0
+# export XDG_RUNTIME_DIR=/run/user/$(id -u)
+
+# --- Windows 程式
+# PATH=/mnt/c/Program\ Files\ \(x86\)/Notepad++/:$PATH
+# export PATH=$PATH:/mnt/c/Program\ Files/Notepad++
+# alias npp="notepad++.exe"
+# alias open="/mnt/c/AP/Anaconda3/Scripts/open.exe"
+# alias pbcopy='clip.exe'
+# alias pbpaste="powershell.exe -command 'Get-Clipboard' | tr -d '\r' | head -n -1"
+# alias wterm="~/WezTerm-20221119-145034-49b9839f-Ubuntu18.04.AppImage"
+# export BROWSER="/usr/bin/firefox"
+# # export BROWSER="/mnt/c/chrome.exe"
+
+# --- 其他這台才有的路徑
+# export LD_LIBRARY_PATH=/lib:$LD_LIBRARY_PATH
+# PATH=$PATH:$HOME/bin/lsix
+# export R_HOME="/usr/sbin/R"
+# # x86_64-conda-linux-gnu-cc 為了在 R 上安裝 languageserver
+# export PATH="$PATH:/usr/sbin/R"
+
+# ================================================================ conda
+# conda 安裝路徑每台不同，從 `conda init` 產生的區塊貼過來（記得 shell.zsh / shell.bash 依 shell 切換）
+# __conda_setup="$('/root/anaconda3/bin/conda' "shell.${ZSH_VERSION:+zsh}${BASH_VERSION:+bash}" 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "/root/anaconda3/etc/profile.d/conda.sh" ]; then
+#         . "/root/anaconda3/etc/profile.d/conda.sh"
+#     else
+#         export PATH="/root/anaconda3/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
+# [[ -z $TMUX ]] || conda deactivate; conda activate base
+
+# ================================================================ nvm
+# 固定這台的 node 版本（共用設定預設 nvm use default）
+# nvm use 20 >/dev/null
+
+# ================================================================ p10k
+# warning inhibition (Optional)
+# 這台啟動時會印訊息（例如下面的 Dropbox 檢查）就關掉 instant prompt，否則 p10k 會警告
+# [ -n "$ZSH_VERSION" ] && typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+# [ -n "$ZSH_VERSION" ] && typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+
+# ---- lab server
+# server 上避免產生太多 zsh process
+# see: https://github.com/romkatv/powerlevel10k/issues/823
+# typeset -g POWERLEVEL9K_DISABLE_GITSTATUS=true
+# P9K_EXCLUDE_ELEMENTS=(azure gcloud google_app_cred)
+# P9K_EXCLUDE_ELEMENTS="${(j:|:)P9K_EXCLUDE_ELEMENTS}"
+# typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(${${(s: :)POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS}:#${~P9K_EXCLUDE_ELEMENTS}})
+
+# ================================================================ Dropbox 狀態檢查
+# if [[ $- == *i* ]]; then
+#   if [ ! -d "$HOME/.dropbox" ]; then
+#     echo "Not detected Dropbox, please check your Dropbox installation."
+#   else
+#     STATUS="$("$HOME/.dropbox-cli" status)"
+#     if [[ "$STATUS" == "Dropbox isn't running!" ]]; then
+#       echo "Dropbox may be logged out and has been closed before (Execute 'nohup \"$HOME/.dropbox-dist/dropboxd\" > /dev/null 2>&1 &' to log in and start the service)."
+#     elif [[ "$STATUS" == Starting* ]]; then
+#       echo "Dropbox may have logged out before, but is now starting (please 'pgrep -u \"$USER\" -f \"dropboxd|dropbox\" | xargs -r kill' to stop it and execute 'nohup \"$HOME/.dropbox-dist/dropboxd\" > /dev/null 2>&1 &' to restart it)."
+#     elif [[ "$STATUS" == "Up to date" ]]; then
+#       echo "Dropbox service is running and up to date."
+#     fi
+#   fi
+# fi
+
+# ================================================================ 小抄：.profile
+# NOTE: modfiy the ~/.profile or ~/.bash_profile
+# （nvm 現在由 ~/.config/shell/tools.sh 在 bash 與 zsh 各自載入，zsh 不必再 source ~/.bashrc）
+#
+# Before:
+# if [ "$BASH" ]; then
+#   if [ -f ~/.bashrc ]; then
+#     . ~/.bashrc
+#   fi
+# fi
+#
+# After:
+# exec zsh
+# mesg n 2> /dev/null || true

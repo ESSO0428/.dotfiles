@@ -1,0 +1,46 @@
+{
+  "env": {
+    "CLAUDE_CODE_SCROLL_SPEED": "3"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0,
+    "refreshInterval": 10
+  },
+  "enabledPlugins": {
+    "cc-split-diff-view@neteye-platform": true,
+    "claude-code-mermaid@claude-code-mermaid": true
+  },
+  "extraKnownMarketplaces": {
+    "neteye-platform": {
+      "source": {
+        "source": "github",
+        "repo": "neteye-platform/ai-agents-tools"
+      }
+    },
+    "claude-code-mermaid": {
+      "source": {
+        "source": "github",
+        "repo": "gecm0/claude-code-mermaid"
+      }
+    }
+  },
+  "tui": "fullscreen",
+  "theme": "dark",
+  "autoCompactEnabled": false,
+  "autoContinueAtUsageLimit": true
+}

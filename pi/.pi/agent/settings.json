@@ -1,0 +1,258 @@
+{
+  "lastChangelogVersion": "1.5.0",
+  "packages": [
+    "npm:pi-peek",
+    "npm:@narumitw/pi-goal",
+    "npm:@tifan/pi-rename",
+    "npm:pi-render-btw",
+    "npm:pi-session-anchor",
+    "npm:pi-command-palette",
+    "npm:pi-web-access",
+    "npm:@guwidoe/pi-clipboard-image",
+    "npm:@amaster.ai/pi-image-gen",
+    "npm:@aliou/pi-processes",
+    "npm:pi-tmux-cursor-focus",
+    "npm:pi-oc-style-agent-switcher",
+    "npm:@esso0428/pi-sidebar",
+    "npm:pi-mono-ask-user-question",
+    "npm:pi-diff-review",
+    "npm:pi-rtk-optimizer",
+    "npm:@lumendigitaldev/pi-wsl-images",
+    "npm:@davecodes/pi-skill-tags",
+    "npm:@esso0428/pi-patty-bg-tasks",
+    "npm:pi-cc-style-workflow",
+    "npm:@observal/pi-insights",
+    "npm:pi-subscription-meter",
+    "npm:pi-haiku",
+    "npm:@iurysza/pi-token-tank",
+    "npm:pi-cache-graph",
+    "npm:@herbertgao/pi-cc-extensions",
+    "npm:pi-autoresearch",
+    "npm:pi-context-view",
+    "npm:@esso0428/pi-retry-command",
+    "npm:@burneikis/pi-fzfp",
+    "npm:@esso0428/pi-tasks",
+    "npm:@esso0428/pi-subagents",
+    "npm:@huntye1/pi-auto-session-name",
+    "npm:pi-rewind-hook"
+  ],
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-terra",
+  "hideThinkingBlock": false,
+  "defaultThinkingLevel": "xhigh",
+  "defaultTools": [
+    "+codemode"
+  ],
+  "agent": {
+    "orchestrator": {
+      "mode": "primary",
+      "model": "github-copilot/claude-sonnet-4.6",
+      "thinking": "high"
+    },
+    "opencodezen": {
+      "mode": "primary",
+      "model": "opencode/deepseek-v4.1-flash-free",
+      "thinking": "max",
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls",
+        "bash",
+        "edit",
+        "write"
+      ]
+    },
+    "build": {
+      "mode": "primary",
+      "model": "openai-codex/gpt-5.6-terra",
+      "thinking": "medium",
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls",
+        "bash",
+        "edit",
+        "write"
+      ]
+    },
+    "plan": {
+      "mode": "primary",
+      "model": "openai-codex/gpt-5.6-terra",
+      "thinking": "medium",
+      "tools": [
+        "read",
+        "grep",
+        "find",
+        "ls"
+      ]
+    }
+  },
+  "subagents": {
+    "defaultTools": [
+      "+codemode"
+    ],
+    "agentOverrides": {
+      "orchestrator": {
+        "model": "openai-codex/gpt-5.6-terra",
+        "thinking": "xhigh",
+        "skills": [
+          "*"
+        ],
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "edit",
+          "write",
+          "subagent",
+          "wait",
+          "web_search",
+          "fetch_content",
+          "get_search_content"
+        ],
+        "systemPromptMode": "append"
+      },
+      "general-purpose": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "xhigh",
+        "systemPromptMode": "append"
+      },
+      "Explore": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "low",
+        "systemPromptMode": "append"
+      },
+      "Plan": {
+        "model": "openai-codex/gpt-5.6-terra",
+        "thinking": "medium",
+        "systemPromptMode": "append"
+      },
+      "council": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "xhigh",
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "subagent",
+          "wait"
+        ],
+        "systemPromptMode": "append"
+      },
+      "designer": {
+        "model": "github-copilot/gemini-3.1-pro-preview",
+        "thinking": "medium",
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "edit",
+          "write"
+        ],
+        "systemPromptMode": "append"
+      },
+      "explorer": {
+        "model": "openai-codex/gpt-5-mini",
+        "thinking": "low",
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash"
+        ],
+        "systemPromptMode": "append"
+      },
+      "fixer": {
+        "model": "openai-codex/gpt-5.6-terra",
+        "thinking": "medium",
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "bash",
+          "edit",
+          "write"
+        ],
+        "systemPrompt": "You are Fixer - a fast, focused implementation specialist. Execute code changes efficiently with complete context. NO external research, NO delegation, NO planning. Implement and report.",
+        "systemPromptMode": "append"
+      },
+      "librarian": {
+        "model": "openai-codex/gpt-5.4-mini",
+        "thinking": "low",
+        "tools": [
+          "read",
+          "grep",
+          "find",
+          "ls",
+          "web_search",
+          "fetch_content",
+          "get_search_content"
+        ],
+        "systemPrompt": "You are Librarian - a research specialist for codebases and documentation. Search for external evidence, official docs, ecosystem behavior, recent changes, benchmarks, and primary sources. Return a focused research brief with source links, confidence level, gaps, and decision implications. Do not edit project files.",
+        "systemPromptMode": "append"
+      },
+      "observer": {
+        "model": "openai-codex/gpt-5-nano",
+        "thinking": "low",
+        "tools": [
+          "read"
+        ],
+        "systemPromptMode": "append"
+      },
+      "oracle": {
+        "model": "openai-codex/gpt-5.6-terra",
+        "thinking": "high",
+        "skills": [
+          "simplify"
+        ],
+        "systemPromptMode": "append"
+      },
+      "researcher": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "xhigh",
+        "skills": [],
+        "systemPrompt": "You are an autonomous web researcher. Search for external evidence, official docs, ecosystem behavior, recent changes, benchmarks, and primary sources. Return a focused research brief with source links, confidence level, gaps, and decision implications. Do not edit project files.",
+        "systemPromptMode": "append"
+      },
+      "reviewer": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "xhigh",
+        "skills": [],
+        "systemPromptMode": "append"
+      },
+      "scout": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "xhigh",
+        "skills": [],
+        "systemPromptMode": "append"
+      },
+      "worker": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "xhigh",
+        "systemPromptMode": "append"
+      }
+    }
+  },
+  "theme": "haiku",
+  "steeringMode": "all",
+  "showCacheMissNotices": true,
+  "powerline": {
+    "preset": "default",
+    "placement": "above"
+  },
+  "tuiMode": "fullscreen",
+  "followUpMode": "one-at-a-time",
+  "fullscreenExitOutput": "transcript",
+  "fullscreenScrollbar": "auto",
+  "fullscreenWheelScrollLines": 3
+}

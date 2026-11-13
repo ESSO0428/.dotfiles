@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# 依 ~/.agents/skills.list 補裝缺少的 skill（只補不刪），再把 skill 連到 ~/.claude/skills
+#
+# 用法：
+#   sync-skills            補裝清單裡有、這台沒裝的 skill
+#   sync-skills --diff     只列出差異：清單有但沒裝 / 有裝但不在清單
+#   sync-skills --export   用這台的安裝狀態覆寫清單（只在主力機上跑，跑完用 git diff 檢查）
+#
+# 清單格式（# 開頭為註解）：
+#   <source>  <skill>
+#   mattpocock/skills  grilling
+#
+# DRY_RUN=1 只印出要執行的指令
+set -euo pipefail
+
+LIST="${SKILLS_LIST:-$HOME/.agents/skills.list}"
+LOCK="$HOME/.agents/.skill-lock.json"
+LINKER="$HOME/.agents/scripts/link-claude-skills.sh"
+DRY_RUN="${DRY_RUN:-0}"
+
+run() { echo "+ $*"; [ "$DRY_RUN" = 1 ] || "$@"; }
+
+# 已安裝的 skill：<source>\t<skill>
+installed() {
+  [ -f "$LOCK" ] || return 0
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.skills | to_entries[] | "\(.value.source)\t\(.key)"' "$LOCK"
+  else
+    node -e '
+      const l = require(process.argv[1]);
+      for (const [k, v] of Object.entries(l.skills || {})) console.log(`${v.source}\t${k}`);
+    ' "$LOCK"
+  fi | sort -u
+}
+
+# 清單內容：<source>\t<skill>
+wanted() {
+  [ -f "$LIST" ] || { echo "找不到清單 $LIST" >&2; exit 1; }
+  sed -e 's/#.*//' "$LIST" | awk 'NF >= 2 { print $1 "\t" $2 }' | sort -u
+}
+
+case "${1:-}" in
+  --export)
+    {
+      echo "# 要安裝的 skill 清單，由 sync-skills --export 產生（主力機）"
+      echo "# 格式：<source>  <skill>"
+      installed | awk -F'\t' '{ printf "%-24s %s\n", $1, $2 }'
+    } > "$LIST.tmp"
+    # LIST 可能是 stow 建的 symlink，寫回原檔而不是換掉 symlink
+    cat "$LIST.tmp" > "$LIST" && rm -f "$LIST.tmp"
+    echo "已寫入 $LIST，請到 dotfiles repo 用 git diff 檢查後 commit"
+    ;;
+  --diff)
+    echo "== 清單有、這台沒裝"
+    comm -23 <(wanted | cut -f2 | sort) <(installed | cut -f2 | sort)
+    echo "== 這台有裝、清單沒有（不會被移除）"
+    comm -13 <(wanted | cut -f2 | sort) <(installed | cut -f2 | sort)
+    ;;
+  "")
+    missing=$(comm -23 <(wanted | cut -f2 | sort) <(installed | cut -f2 | sort))
+    if [ -z "$missing" ]; then
+      echo "清單裡的 skill 都已安裝"
+    else
+      # 依來源分組，每個來源跑一次 npx skills add
+      while IFS=$'\t' read -r src skills; do
+        args=()
+        for s in $skills; do args+=(-s "$s"); done
+        run npx -y skills add "$src" -g -y "${args[@]}"
+      done < <(wanted | awk -F'\t' '
+        NR == FNR { m[$1]; next }
+        ($2 in m) { a[$1] = a[$1] " " $2 }
+        END { for (k in a) print k "\t" a[k] }' <(printf '%s\n' "$missing") -)
+    fi
+    # link-claude-skills.sh 自己支援 DRY_RUN
+    if [ -f "$LINKER" ]; then
+      DRY_RUN="$DRY_RUN" bash "$LINKER"
+    fi
+    ;;
+  *)
+    sed -n '2,13p' "$0"
+    exit 1
+    ;;
+esac

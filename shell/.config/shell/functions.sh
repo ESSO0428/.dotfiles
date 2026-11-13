@@ -1,87 +1,6 @@
-# NOTE: Return early during non-interactive sessions (e.g., scp file transfer)
-[[ $- == *i* ]] || return
-
-# export LIBGL_ALWAYS_INDIRECT=1
-export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0.0
-export DISPLAY=:0
-# LIBGL_ALWAYS_INDIRECT=0
-
-SHELL=$0
-# [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-
-# bat (酷炫版的 cat 具有語法高量的功能)
-# wget https://github.com/sharkdp/bat/releases/download/v0.21.0/bat-v0.21.0-x86_64-unknown-linux-musl.tar.gz
-# tar -zxvf bat-v0.21.0-x86_64-unknown-linux-musl.tar.gz
-# cd ~/bat-v0.21.0-x86_64-unknown-linux-musl
-# cp ./bat ~/bin
-# cp ./bat.1 ~/share/man/man1/
-# 安裝 bat 的主題 (也可不裝，它有很多預設的主題)
-# mkdir -p "$(bat --config-dir)/themes"
-# cd "$(bat --config-dir)/themes"
-# git clone https://github.com/greggb/sublime-snazzy
-
-export FZF_DEFAULT_COMMAND="fd --type file"
-# export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --preview '(highlight -O ansi {} || cat {}) 2> /dev/null | head -500' --bind 'alt-d:toggle-preview'"
-# export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --preview '(highlight -O ansi {} || bat --color=\"always\" {}) 2> /dev/null | head -500' --bind 'alt-d:toggle-preview'"
-# export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --preview '(highlight -O ansi {} || bat --color=\"always\" --theme=\"Sublime Snazzy\" {}) 2> /dev/null | head -500' --bind 'alt-d:toggle-preview'"
-# server
-# export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --preview '([[ -f {} ]] && (bat --color=\"always\" --theme=\"Visual Studio Dark+\" {} || cat {})) || ([[ -d {} ]] && (tree -C {} | head -200)) || echo {} 2> /dev/null | head -200' --bind 'alt-d:toggle-preview,f1:execute(vim -c \"execute \\\"edit\\\" expand({})\" >/dev/tty),f2:execute(code {})'"
-
-# wsl
-# export FZF_DEFAULT_OPTS="--no-mouse --bind 'alt-j:preview-down,alt-k:preview-up' --height 40% --layout=reverse --preview '([[ -f {} ]] && (bat --color=\"always\" --theme=\"Visual Studio Dark+\" {} || cat {})) || ([[ -d {} ]] && (tree -C {} | head -200)) || echo {} 2> /dev/null | head -200' --bind 'alt-d:toggle-preview,f1:execute(notepad++.exe {}),f2:execute(code {})'"
-export FZF_DEFAULT_OPTS="--no-mouse --bind 'ctrl-o:preview-down,ctrl-u:preview-up'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'alt-k:down,alt-i:up'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'tab:toggle-out,shift-tab:toggle-in'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'alt-d:toggle-preview'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'alt-j:change-preview-window(99%,right),alt-l:change-preview-window(50%,right)'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --height 40% --layout=reverse --preview '([[ -f {} ]] && (bat --color=\"always\" --theme=\"Visual Studio Dark+\" {} || cat {})) || ([[ -d {} ]] && (tree -C {} | head -200)) || echo {} 2> /dev/null | head -200'"
-# FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'f1:execute(vim -c \"execute \\\"edit\\\" expand({})\" >/dev/tty),f2:execute(code {})'"
-FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --bind 'f1:execute(~/nvim.appimage {}),f2:execute(code {})'"
-
-
-# kitty image preview (requeir openGL3.3 above in Lab PC [we don't have])
-# export FZF_DEFAULT_OPTS="--no-mouse --height 40% --layout=reverse --preview '([[ -f {} ]] && (kitty icat --clear --place 200x40@0x0 --transfer-mode file {} || bat --color=\"always\" --theme=\"Visual Studio Dark+\" {} || cat {})) || ([[ -d {} ]] && (tree -C {} | head -200)) || echo {} 2> /dev/null | head -200' --bind 'alt-d:toggle-preview,f1:execute(notepad++.exe {}),f2:execute(code {})'"
-
-_fzf_comprun() {
-  local command=$1
-  shift
-
-  case "$command" in
-    cd)           fzf "$@" --preview 'tree -C {} | head -200' ;;
-    export|unset) fzf "$@" --preview "eval 'echo \$'{}" ;;
-    ssh)          fzf "$@" --preview 'dig {}' ;;
-    *)            fzf "$@" ;;
-  esac
-}
-
-# export FZF_ALT_C_OPTS="--preview 'tree -C {} | head -200' --bind 'alt-j:preview-down,alt-k:preview-up'"
-# export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window hidden:wrap"
-export FZF_ALT_C_OPTS="--preview 'tree -C {} | head -200' --bind 'alt-k:preview-down,alt-i:preview-up'"
-export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window hidden:wrap"
-
-export PATH=$PATH:/mnt/c/Program\ Files/Notepad++
-alias npp="notepad++.exe"
-# alias j2dp="cd /mnt/y"
-alias open="/mnt/c/AP/Anaconda3/Scripts/open.exe"
-
-. "$HOME/.cargo/env"
-
-
-# mkdir -p /mnt/y
-# sudo mount -t drvfs Y: /mnt/y
-
-# ranger
-alias ra="ranger"
-export RANGER_LOAD_DEFAULT_RC FALSE
-
-# user bin
-PATH=$HOME/bin/:$PATH
-
-alias nvim="~/nvim.appimage"
-PATH=/root/.local/bin:$PATH
-# golang (go)
-# wget https://go.dev/dl/go1.19.10.linux-amd64.tar.gz
-PATH=$HOME/bin/go/bin/:$PATH
+# shellcheck shell=bash
+# 共用函式（bash 與 zsh 都會 source）
+# ssh 相關函式會讀 alias 取得連線參數，lab 的 alias 放在 ~/.alias.local
 
 # code_cli : vscode remote tunnel (code tunnel)
 code_cli() {
@@ -379,12 +298,13 @@ ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
   # Host 別名由目標 IP 對照 Windows ssh config 決定，寫入 server 的 ~/.ssh/host_names.d/<IP>
   # （每個 IP 一個檔案，共用 NFS 的 server 不會互相覆蓋）
   local ssh_args
-  ssh_args=$(alias "$arg1" | sed -E "s/^alias [^=]+='?//; s/'$//" |
+  ssh_args=$(alias "$arg1" | sed -E "s/^(alias )?[^=]+='?//; s/'$//" |
     awk '{ for (i = 1; i <= NF; i++) if ($i != "ssh" && $i !~ /^-[YC]+$/) printf "%s ", $i }')
   vscode-remote-host-sync -- $ssh_args
 }
 # ex : ssh_sshconfig_sync_remote_for_nvim_intergration_vscode sshdp
 # 或直接用 Windows ssh config 的 Host 別名（跳板機鏈自動解析）: vscode-remote-host-sync LabServer29
+# ex : ssh LabServerDP 'cat > ~/.ssh/host_names' < ~/.ssh/host_names > /dev/null 2>&1
 
 ls_ssh_tools() {
   # 定义忽略清单
@@ -408,35 +328,17 @@ ls_ssh_tools() {
   compgen -c | grep -Ev "^($ignorePattern)$" | grep -Ev '^_' | grep -E 'ssh|sshfs'
 }
 
-# reference ssh alias 
-# alias sshdp="ssh -Y -C Andy6@192.168.X.XX"
-# alias sshweb="ssh -p 22177 -Y -C webadm@192.168.X.XXX"
-## jump ssh alias
-# alias sshlab121="ssh -Y -C Andy6@192.168.X.121"
-# alias sshlab27="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.27"
-# alias sshlab28="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.28"
-# alias sshlab29="ssh -Y -C -J Andy6@192.168.X.121 Andy6@192.168.XX.29"
-# alias sshremotelab_lab121="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX Andy6@192.168.X.121"
-# alias sshremotelab_laba27="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.27"
-# alias sshremotelab_laba28="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.28"
-# alias sshremotelab_laba29="ssh -Y -C -J root@1.tcp.jp.ngrok.io:XXXXX,Andy6@192.168.X.121 Andy6@192.168.XX.29"
+fzf_rlgrep() {
+  printf "Input your file name (wildcard support) : "
+  read -r grep_fn
+  grep_search=$(find . -iname $grep_fn -type f -exec cat {} \; \
+  | fzf --preview "echo -e \"$fg[green]Search :\n{}\n\n$fg[magenta]FilePath :\"; \
+  grep -F -rl --include=\"$grep_fn\" {}")
+  printf '%.s─' $(seq 1 $(tput cols))
+  echo -e "$fg[green]Search :\n$grep_search\n\n$fg[magenta]FilePath :"
+  grep -F -rl --include=$grep_fn "$grep_search"
+}
 
-# NOTE: nvm activate command please add to ~/.bashrc
-# export NVM_DIR="$HOME/.nvm"
-# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-# # nvm use XXXX
-# [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-# NOTE: modfiy the ~/.profile or ~/.bash_profile
-# For activate nvm in zsh (and attention .zshrc  have source ~/.bashrc for load above nvm activate command)
-#
-# Before:
-# if [ "$BASH" ]; then
-#   if [ -f ~/.bashrc ]; then
-#     . ~/.bashrc
-#   fi
-# fi
-#
-# After:
-# exec zsh
-# mesg n 2> /dev/null || true
+w3mimg () {
+	w3m -o imgdisplay=/usr/lib/w3m/w3mimgdisplay $1
+}

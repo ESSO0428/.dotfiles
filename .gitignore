@@ -1,0 +1,16 @@
+# 機器專屬設定（範本在 shell/.config/shell/*.example）
+.tool.local
+.alias.local
+
+# 保險：憑證與執行狀態不進 repo
+*credentials*
+auth.json
+models-store.json
+*-cache.json
+node_modules/
+__pycache__/
+
+# ranger 執行時產生的狀態
+ranger/.config/ranger/bookmarks
+ranger/.config/ranger/history
+ranger/.config/ranger/tagged
