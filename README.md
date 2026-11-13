@@ -34,11 +34,31 @@ linked; credentials, history and caches next to them stay untouched).
 > ```
 
 ```bash
-git clone git@github.com:ESSO0428/.dotfiles.git ~/.dotfiles
+git clone git@github.com:ESSO0428/.dotfiles.git ~/.dotfiles   # or: git -C ~/.dotfiles pull
 cd ~/.dotfiles
-DRY_RUN=1 ./install.sh          # preview
-./install.sh                    # link every package
-./install.sh shell vim tmux     # or only some packages
+./install.sh                    # interactive: pick packages, decide each conflict
+```
+
+Interactive mode (run in a terminal without package arguments) walks you through it, so you do
+not have to remember which files belong to which package:
+
+1. **Pick packages** (fzf, `Tab` to multi-select, `Ctrl-A` for all; a numbered menu without fzf).
+   Each row shows how many files are `已連結` (linked), `新增` (new), `相同` (same content) and
+   `不同` (differ); the preview lists every file with a diff for the ones that differ.
+2. **For each package with differing files**, choose: `r` keep the repo version (this machine's
+   file is backed up), `a` keep this machine's version (adopted into the repo), `d` view the diff,
+   `s` skip.
+3. **Confirm** the summary, then it links, creates missing rc / `.local` files from templates and
+   finally shows `sync-skills --diff` and asks before installing missing skills.
+
+Non-interactive forms, for scripts:
+
+```bash
+./install.sh --status [pkg..]   # only list each file's state, change nothing
+DRY_RUN=1 ./install.sh --all    # preview
+./install.sh --all              # link every package, repo version wins
+./install.sh shell vim tmux     # only some packages
+./install.sh --adopt pi         # this machine's version wins for pi
 ```
 
 - An existing real file at a target path is **moved to `~/.dotfiles-backup/<time>/`** before
