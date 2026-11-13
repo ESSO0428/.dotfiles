@@ -17,6 +17,7 @@ for _d in \
   "$HOME/bin/go/bin" \
   "$HOME/.cargo/bin" \
   "$HOME/.local/bin" \
+  "$HOME/.agents/scripts" \
   "$HOME/bin/tmux" \
   "$HOME/bin" \
   "$HOME/.local/share/bob/nvim-bin"; do

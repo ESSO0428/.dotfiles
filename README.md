@@ -80,7 +80,7 @@ DRY_RUN=1 ./install.sh --all    # preview
 | `tmux`     | `.tmux/.tmux.conf`, `.tmux.conf.local` ([oh-my-tmux](https://github.com/gpakosz/.tmux) is cloned first if `~/.tmux` is missing) |
 | `bin`      | `~/bin/*` tools (see [Tools](#tools))                                          |
 | `ranger`   | `.config/ranger/`                                                              |
-| `claude`   | `.claude/{CLAUDE.md,RTK.md,settings.json,keybindings.json,agents/}`, `.config/ccstatusline/settings.json` |
+| `claude`   | `.claude/{CLAUDE.md,RTK.md,settings.json,keybindings.json,agents/,commands/}`, `.config/ccstatusline/settings.json` |
 | `opencode` | `.config/opencode/{opencode.jsonc,tui.json,dcp.jsonc,package.json,opencode-quota/}` |
 | `pi`       | `.pi/agent/{settings.json,keybindings.json,sidebar-ui.json,pi-cc-extensions.json,pi-command-palette.json,agent-switcher.json,pi-goal.json,agents/,extensions/*.json}` |
 | `agents`   | `.agents/skills.list`, `.agents/scripts/{sync-skills,link-claude-skills.sh}`   |
@@ -135,17 +135,27 @@ Only hand-written settings are tracked. Credentials and runtime state are **not*
 - pi extensions are restored from `packages` in `~/.pi/agent/settings.json`.
 - opencode plugins are listed in `opencode.jsonc` / `package.json`.
 
-**Skills are not synced as files.** `~/.agents/skills.list` lists what should be installed and
-`sync-skills` installs the missing ones with `npx skills add -g` (it never removes anything), then
-runs `link-claude-skills.sh` to link them into `~/.claude/skills`:
+**Skills are not synced as files.** `~/.agents/skills.list` lists what should be installed;
+`sync-skills` (in `~/.agents/scripts/`, which `env.sh` puts on `PATH`) manages it. Run it without
+arguments in a terminal for an fzf menu (the preview shows each skill's `SKILL.md`):
+
+| action    | what it does                                                                 |
+|-----------|------------------------------------------------------------------------------|
+| `add`     | pick skills installed on this machine and append them to the list            |
+| `install` | pick skills from the list that this machine is missing and install them      |
+| `remove`  | pick skills to drop from the list (they stay installed on this machine)      |
+
+Nothing is ever uninstalled. After installing, `link-claude-skills.sh` links the skills into
+`~/.claude/skills`. Edit the list, then commit it from `~/.dotfiles` as usual.
 
 ```bash
+sync-skills            # interactive (falls back to --install without fzf or a terminal)
 sync-skills --diff     # what is missing / extra on this machine
-sync-skills            # install the missing ones (DRY_RUN=1 to preview)
-sync-skills --export   # main machine only: rewrite skills.list from what is installed
+sync-skills --install  # install the missing ones (DRY_RUN=1 to preview)
+sync-skills --export   # overwrite the whole list with what is installed here
 ```
 
-Generate the list on the main machine, not on a secondary one.
+Build the list from the main machine (`add`, or `--export`), not from a secondary one.
 
 ## Rc Files, `.profile` or other dotfiles
 

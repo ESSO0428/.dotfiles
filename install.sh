@@ -25,7 +25,7 @@ declare -A DESC=(
   [tmux]="oh-my-tmux 的 .tmux.conf、.tmux.conf.local"
   [bin]="~/bin 工具（fzf_rg、ssh-tunnel-manager…）"
   [ranger]=".config/ranger/"
-  [claude]="Claude Code 設定、agents、ccstatusline"
+  [claude]="Claude Code 設定、agents、commands、ccstatusline"
   [opencode]="opencode 設定、tui、quota"
   [pi]="pi 設定、sidebar、擴充設定、agents"
   [agents]="skills 清單、sync-skills、link-claude-skills.sh"
@@ -247,11 +247,12 @@ setup_shell_files() {
 run_skills() {
   local interactive="$1"
   echo "== skills"
+  # 互動模式交給 sync-skills 自己的選單（沒有 fzf 時它會退回 --install）
   if [ "$interactive" = 1 ]; then
-    bash "$DOTFILES/agents/.agents/scripts/sync-skills" --diff || true
-    [ "$(ask "要補裝清單裡缺少的 skill 嗎？(y/N)：" n)" = y ] || return 0
+    DRY_RUN="$DRY_RUN" bash "$DOTFILES/agents/.agents/scripts/sync-skills" </dev/tty
+  else
+    DRY_RUN="$DRY_RUN" bash "$DOTFILES/agents/.agents/scripts/sync-skills" --install
   fi
-  DRY_RUN="$DRY_RUN" bash "$DOTFILES/agents/.agents/scripts/sync-skills"
 }
 
 # ---------------------------------------------------------------- main

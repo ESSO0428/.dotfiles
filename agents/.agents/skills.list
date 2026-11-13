@@ -1,4 +1,4 @@
 # 要安裝的 skill 清單（sync-skills 讀這份，只補裝不刪除）
-# 請在主力機上跑 `sync-skills --export` 產生，不要用非主力機的安裝狀態
+# 請在主力機上用 `sync-skills`（互動選單的 add）或 `sync-skills --export` 加入，不要用非主力機的安裝狀態
 # 格式：<source>  <skill>
 # mattpocock/skills        grilling

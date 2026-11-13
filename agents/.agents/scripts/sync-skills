@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# 依 ~/.agents/skills.list 補裝缺少的 skill（只補不刪），再把 skill 連到 ~/.claude/skills
+# 管理 ~/.agents/skills.list（要安裝的 skill 清單），並補裝這台缺少的 skill（只補不刪）
 #
 # 用法：
-#   sync-skills            補裝清單裡有、這台沒裝的 skill
+#   sync-skills            互動模式（終端機 + fzf）：把這台的 skill 加進清單 / 補裝 / 從清單移除
+#                          沒有 fzf 或不在終端機時，等同 --install
+#   sync-skills --install  補裝清單裡有、這台沒裝的 skill，再把 skill 連到 ~/.claude/skills
 #   sync-skills --diff     只列出差異：清單有但沒裝 / 有裝但不在清單
-#   sync-skills --export   用這台的安裝狀態覆寫清單（只在主力機上跑，跑完用 git diff 檢查）
+#   sync-skills --export   用這台的安裝狀態覆寫整份清單（只在主力機上跑，跑完用 git diff 檢查）
 #
 # 清單格式（# 開頭為註解）：
 #   <source>  <skill>
@@ -15,10 +17,17 @@ set -euo pipefail
 
 LIST="${SKILLS_LIST:-$HOME/.agents/skills.list}"
 LOCK="$HOME/.agents/.skill-lock.json"
+SKILLS_DIR="$HOME/.agents/skills"
 LINKER="$HOME/.agents/scripts/link-claude-skills.sh"
 DRY_RUN="${DRY_RUN:-0}"
 
 run() { echo "+ $*"; [ "$DRY_RUN" = 1 ] || "$@"; }
+
+need_list() {
+  [ -f "$LIST" ] && return
+  echo "找不到清單 $LIST，請先執行 ~/.dotfiles/install.sh agents" >&2
+  exit 1
+}
 
 # 已安裝的 skill：<source>\t<skill>
 installed() {
@@ -35,49 +44,149 @@ installed() {
 
 # 清單內容：<source>\t<skill>
 wanted() {
-  [ -f "$LIST" ] || { echo "找不到清單 $LIST" >&2; exit 1; }
+  need_list
   sed -e 's/#.*//' "$LIST" | awk 'NF >= 2 { print $1 "\t" $2 }' | sort -u
 }
 
+# 清單和這台的對照：<狀態>\t<source>\t<skill>
+#   both     清單有、這台也裝了
+#   missing  清單有、這台沒裝
+#   extra    這台有裝、清單沒有
+states() {
+  # 每行加上 W（清單）/ I（已安裝）標記再合併；不用 FNR == NR，清單是空的時它會把已安裝的誤當成清單
+  { wanted | sed 's/^/W\t/'; installed | sed 's/^/I\t/'; } |
+    awk -F'\t' '
+      $1 == "W" { w[$3] = $2 }
+      $1 == "I" { i[$3] = $2 }
+      END {
+        for (s in w) print ((s in i) ? "both" : "missing") "\t" w[s] "\t" s
+        for (s in i) if (!(s in w)) print "extra\t" i[s] "\t" s
+      }' | sort -t$'\t' -k3
+}
+
+# 寫回清單：LIST 可能是 stow 建的 symlink，用 cat > 寫回原檔而不是換掉 symlink
+write_list() { local tmp; tmp=$(mktemp); cat > "$tmp"; cat "$tmp" > "$LIST"; rm -f "$tmp"; }
+
+# 從 stdin 讀 <source>\t<skill>，依來源分組安裝，最後重建 ~/.claude/skills 的連結
+install_entries() {
+  local src skills s args
+  while IFS=$'\t' read -r src skills; do
+    args=()
+    for s in $skills; do args+=(-s "$s"); done
+    run npx -y skills add "$src" -g -y "${args[@]}"
+  done < <(awk -F'\t' 'NF >= 2 { a[$1] = a[$1] " " $2 } END { for (k in a) print k "\t" a[k] }')
+  # link-claude-skills.sh 自己支援 DRY_RUN
+  if [ -f "$LINKER" ]; then
+    DRY_RUN="$DRY_RUN" bash "$LINKER"
+  fi
+}
+
+cmd_install() {
+  local missing
+  missing=$(states | awk -F'\t' '$1 == "missing" { print $2 "\t" $3 }')
+  if [ -z "$missing" ]; then
+    echo "清單裡的 skill 都已安裝"
+    install_entries < /dev/null
+  else
+    printf '%s\n' "$missing" | install_entries
+  fi
+}
+
+cmd_diff() {
+  echo "== 清單有、這台沒裝"
+  states | awk -F'\t' '$1 == "missing" { printf "  %-24s %s\n", $2, $3 }'
+  echo "== 這台有裝、清單沒有（不會被移除）"
+  states | awk -F'\t' '$1 == "extra" { printf "  %-24s %s\n", $2, $3 }'
+}
+
+cmd_export() {
+  {
+    echo "# 要安裝的 skill 清單，由 sync-skills --export 產生（主力機）"
+    echo "# 格式：<source>  <skill>"
+    installed | awk -F'\t' '{ printf "%-24s %s\n", $1, $2 }'
+  } | write_list
+  echo "已寫入 $LIST，請到 dotfiles repo 用 git diff 檢查後 commit"
+}
+
+# ---------------------------------------------------------------- 互動
+# fzf 複選：stdin 是 <狀態>\t<source>\t<skill>，輸出選中的 <source>\t<skill>
+pick() {
+  local header="$1"
+  awk -F'\t' '{ printf "%-24s %-28s\t%s\t%s\n", $2, $3, $2, $3 }' |
+    fzf --multi --reverse --height=80% --delimiter=$'\t' --with-nth=1 \
+      --prompt="skill> " --header="$header"$'\nTab 勾選（可複選）、Ctrl-A 全選、Enter 確認、Esc 返回' \
+      --bind='ctrl-a:select-all' \
+      --preview="bash '$0' --preview {3} {2}" \
+      --preview-window='right,55%,wrap' |
+    awk -F'\t' '{ print $2 "\t" $3 }' || true
+}
+
+count() { states | awk -F'\t' -v s="$1" '$1 == s' | wc -l | tr -d ' '; }
+
+interactive() {
+  local action chosen
+  while true; do
+    action=$(printf '%s\n' \
+      "add      把這台的 skill 加進清單（這台有、清單沒有：$(count extra) 個）" \
+      "install  安裝清單裡這台缺少的 skill（$(count missing) 個）" \
+      "remove   從清單移除（清單共 $(( $(count both) + $(count missing) )) 個；已安裝的不會被刪）" \
+      "quit     離開" |
+      fzf --reverse --height=40% --prompt="sync-skills> " \
+        --header="清單：$LIST（改完到 ~/.dotfiles 用 git diff 檢查後 commit）" |
+      awk '{ print $1 }') || true
+
+    case "$action" in
+      add)
+        chosen=$(states | awk -F'\t' '$1 == "extra"' | pick "要加進清單的 skill（這台已安裝）")
+        [ -n "$chosen" ] || continue
+        printf '%s\n' "$chosen" | awk -F'\t' '{ printf "%-24s %s\n", $1, $2 }' >> "$LIST"
+        echo "已加入清單："; printf '%s\n' "$chosen" | awk -F'\t' '{ print "  " $1 "  " $2 }'
+        ;;
+      install)
+        chosen=$(states | awk -F'\t' '$1 == "missing"' | pick "要安裝的 skill（清單有、這台沒裝）")
+        [ -n "$chosen" ] || continue
+        printf '%s\n' "$chosen" | install_entries
+        ;;
+      remove)
+        chosen=$(states | awk -F'\t' '$1 == "both" || $1 == "missing"' | pick "要從清單移除的 skill（不會從這台解除安裝）")
+        [ -n "$chosen" ] || continue
+        # 保留註解與其他行，只刪掉選中的 skill
+        awk 'FNR == NR { split($0, a, "\t"); rm[a[2]]; next }
+             { line = $0; sub(/#.*/, "", line); split(line, f, " ") }
+             !(f[2] in rm)' <(printf '%s\n' "$chosen") "$LIST" | write_list
+        echo "已從清單移除："; printf '%s\n' "$chosen" | awk -F'\t' '{ print "  " $2 }'
+        ;;
+      *) break ;;
+    esac
+  done
+  git -C "$(dirname "$(readlink -f "$LIST")")" diff --stat -- "$(readlink -f "$LIST")" 2>/dev/null || true
+}
+
+# fzf 預覽用：顯示 skill 的 SKILL.md 開頭，沒裝就顯示來源
+cmd_preview() {
+  local skill="$1" src="$2" f
+  for f in "$SKILLS_DIR/$skill/SKILL.md" "$SKILLS_DIR/$skill/skills/$skill/SKILL.md"; do
+    [ -f "$f" ] && { sed -n '1,40p' "$f"; return; }
+  done
+  echo "這台沒有安裝：$skill"
+  echo "來源：$src"
+}
+
 case "${1:-}" in
-  --export)
-    {
-      echo "# 要安裝的 skill 清單，由 sync-skills --export 產生（主力機）"
-      echo "# 格式：<source>  <skill>"
-      installed | awk -F'\t' '{ printf "%-24s %s\n", $1, $2 }'
-    } > "$LIST.tmp"
-    # LIST 可能是 stow 建的 symlink，寫回原檔而不是換掉 symlink
-    cat "$LIST.tmp" > "$LIST" && rm -f "$LIST.tmp"
-    echo "已寫入 $LIST，請到 dotfiles repo 用 git diff 檢查後 commit"
-    ;;
-  --diff)
-    echo "== 清單有、這台沒裝"
-    comm -23 <(wanted | cut -f2 | sort) <(installed | cut -f2 | sort)
-    echo "== 這台有裝、清單沒有（不會被移除）"
-    comm -13 <(wanted | cut -f2 | sort) <(installed | cut -f2 | sort)
-    ;;
+  --preview) cmd_preview "$2" "$3" ;;
+  --export) cmd_export ;;
+  --diff) cmd_diff ;;
+  --install) cmd_install ;;
   "")
-    missing=$(comm -23 <(wanted | cut -f2 | sort) <(installed | cut -f2 | sort))
-    if [ -z "$missing" ]; then
-      echo "清單裡的 skill 都已安裝"
+    if [ -t 0 ] && [ -t 1 ] && command -v fzf >/dev/null 2>&1; then
+      need_list
+      interactive
     else
-      # 依來源分組，每個來源跑一次 npx skills add
-      while IFS=$'\t' read -r src skills; do
-        args=()
-        for s in $skills; do args+=(-s "$s"); done
-        run npx -y skills add "$src" -g -y "${args[@]}"
-      done < <(wanted | awk -F'\t' '
-        NR == FNR { m[$1]; next }
-        ($2 in m) { a[$1] = a[$1] " " $2 }
-        END { for (k in a) print k "\t" a[k] }' <(printf '%s\n' "$missing") -)
-    fi
-    # link-claude-skills.sh 自己支援 DRY_RUN
-    if [ -f "$LINKER" ]; then
-      DRY_RUN="$DRY_RUN" bash "$LINKER"
+      cmd_install
     fi
     ;;
   *)
-    sed -n '2,13p' "$0"
+    sed -n '2,16p' "$0"
     exit 1
     ;;
 esac
