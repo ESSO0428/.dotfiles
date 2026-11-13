@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+# Register which Windows ssh-config Host alias a remote server is, for nvim's :Rcode.
+#
+# The server keeps one file per IP:  ~/.ssh/host_names.d/<server ip>   (content: Host alias)
+# One file per IP means servers sharing an NFS home never overwrite each other.
+#
+# Usage (run in WSL):
+#   vscode-remote-host-sync --lookup IP [IP...]
+#       Print "IP Host" for the first IP whose HostName matches a Host in the Windows
+#       ssh config (first Host wins). Used by nvim's :UpdateRegisterHostHameFromLocal
+#       through the reverse ssh tunnel.
+#   vscode-remote-host-sync HOST
+#       Connect to HOST (jump chain resolved from the Windows ssh config) and register it.
+#   vscode-remote-host-sync [HOST] -- SSH_ARGS...
+#       Same, but connect with your own ssh arguments, e.g.
+#         vscode-remote-host-sync -- -J Andy6@192.168.1.121 Andy6@192.168.12.30
+#       Without HOST, the Host alias is looked up from the target IP (last argument).
+#   --dry-run   print the ssh command instead of running it
+#   --config F  Windows ssh config path (default: /mnt/c/Users/$WINUSER/.ssh/config)
+
+set -o pipefail
+
+die() { echo "[ERROR] $*" >&2; exit 1; }
+
+win_config=""
+dry_run=0
+mode="push"
+host=""
+lookup_ips=()
+ssh_args=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --lookup) mode="lookup"; shift; while [[ $# -gt 0 && "$1" != --* ]]; do lookup_ips+=("$1"); shift; done ;;
+    --dry-run) dry_run=1; shift ;;
+    --config) win_config="$2"; shift 2 ;;
+    -h|--help) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --) shift; ssh_args=("$@"); break ;;
+    -*) die "unknown option: $1" ;;
+    *) [[ -z "$host" ]] || die "only one HOST allowed"; host="$1"; shift ;;
+  esac
+done
+
+if [[ -z "$win_config" ]]; then
+  win_user="${WINUSER:-}"
+  if [[ -z "$win_user" ]] && command -v wslvar >/dev/null 2>&1; then
+    win_user="$(wslvar USERNAME 2>/dev/null | tr -d '\r')"
+  fi
+  [[ -n "$win_user" ]] || die "cannot detect Windows user; pass --config or set WINUSER"
+  win_config="/mnt/c/Users/${win_user}/.ssh/config"
+fi
+[[ -f "$win_config" ]] || die "Windows ssh config not found: $win_config"
+
+# CRLF-free copy so ssh -G parses it cleanly
+cfg="$(mktemp)"
+trap 'rm -f "$cfg"' EXIT
+tr -d '\r' < "$win_config" > "$cfg"
+
+valid_name() { [[ "$1" =~ ^[A-Za-z0-9._-]+$ ]]; }
+valid_ip() { [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; }
+
+# Host aliases in file order (patterns with * ? ! are skipped)
+list_hosts() {
+  awk 'tolower($1) == "host" { for (i = 2; i <= NF; i++) if ($i !~ /[*?!]/) print $i }' "$cfg"
+}
+
+# ssh -G value of a key for an alias
+ssh_g() { ssh -G -F "$cfg" "$1" 2>/dev/null | awk -v k="$2" '$1 == k { $1 = ""; sub(/^ /, ""); print; exit }'; }
+
+lookup() {
+  local ip h
+  local -A host_ip=()
+  for h in $(list_hosts); do
+    host_ip[$h]="$(ssh_g "$h" hostname)"
+  done
+  for ip in "$@"; do
+    for h in $(list_hosts); do
+      if [[ "${host_ip[$h]}" == "$ip" ]]; then
+        echo "$ip $h"
+        return 0
+      fi
+    done
+  done
+  return 1
+}
+
+# "user@host:port" for an alias
+spec_of() {
+  local h="$1" hn user port
+  hn="$(ssh_g "$h" hostname)"; user="$(ssh_g "$h" user)"; port="$(ssh_g "$h" port)"
+  [[ -n "$hn" ]] || die "cannot resolve Host $h"
+  printf '%s%s%s' "${user:+$user@}" "$hn" "${port:+:$port}"
+}
+
+# proxy alias of a Host: ProxyJump alias, or "ProxyCommand ssh ... -W %h:%p <alias>"
+proxy_of() {
+  local h="$1" pj pc
+  pj="$(ssh_g "$h" proxyjump)"
+  if [[ -n "$pj" && "$pj" != "none" ]]; then
+    [[ "$pj" == *,* ]] && die "ProxyJump list on $h is not supported; use -- SSH_ARGS"
+    echo "$pj"; return
+  fi
+  pc="$(ssh_g "$h" proxycommand)"
+  if [[ -n "$pc" && "$pc" != "none" ]]; then
+    if [[ "$pc" =~ ^ssh[[:space:]].*-W[[:space:]]+[^[:space:]]+[[:space:]]+([^[:space:]]+)$ ]]; then
+      echo "${BASH_REMATCH[1]}"; return
+    fi
+    die "unsupported ProxyCommand on $h: $pc (use -- SSH_ARGS)"
+  fi
+}
+
+# comma separated -J chain for a Host (outermost first)
+jump_chain_of() {
+  local h="$1" depth="${2:-0}" p inner
+  (( depth < 8 )) || die "proxy chain too deep at $h"
+  p="$(proxy_of "$h")" || exit 1
+  [[ -n "$p" ]] || return 0
+  # a proxy can itself be user@host:port rather than an alias
+  if [[ "$p" == *@* ]] || ! list_hosts | grep -qxF "$p"; then
+    echo "$p"; return
+  fi
+  inner="$(jump_chain_of "$p" $((depth + 1)))" || exit 1
+  echo "${inner:+$inner,}$(spec_of "$p")"
+}
+
+if [[ "$mode" == "lookup" ]]; then
+  [[ ${#lookup_ips[@]} -gt 0 ]] || die "--lookup needs at least one IP"
+  for ip in "${lookup_ips[@]}"; do valid_ip "$ip" || die "invalid IP: $ip"; done
+  lookup "${lookup_ips[@]}"
+  exit $?
+fi
+
+# ---- push mode ----
+if [[ ${#ssh_args[@]} -eq 0 ]]; then
+  [[ -n "$host" ]] || die "need HOST or -- SSH_ARGS (see --help)"
+  list_hosts | grep -qxF "$host" || die "Host $host not found in $win_config"
+  target="$(spec_of "$host")" || exit 1
+  chain="$(jump_chain_of "$host")" || exit 1
+  t_port="${target##*:}"; t_dest="${target%:*}"
+  ssh_args=(-p "$t_port")
+  [[ -n "$chain" ]] && ssh_args+=(-J "$chain")
+  ssh_args+=("$t_dest")
+elif [[ -z "$host" ]]; then
+  last="${ssh_args[-1]}"; target_ip="${last##*@}"; target_ip="${target_ip%%:*}"
+  valid_ip "$target_ip" || die "cannot find target IP in ssh args (last arg: $last); pass HOST explicitly"
+  found="$(lookup "$target_ip")" || die "no Host in $win_config has HostName $target_ip"
+  host="${found#* }"
+fi
+valid_name "$host" || die "invalid Host alias: $host"
+
+# Runs on the server: register under the server's own primary IP (same rule nvim uses)
+remote_script=$(cat <<EOF
+h='$host'
+ip=\$(ip -o route get 8.8.8.8 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')
+[ -n "\$ip" ] || ip=\$(hostname -I 2>/dev/null | awk '{print \$1}')
+[ -n "\$ip" ] || { echo "cannot detect server IP" >&2; exit 1; }
+d="\$HOME/.ssh/host_names.d"
+mkdir -p "\$d" && printf '%s\n' "\$h" > "\$d/\$ip.tmp.\$\$" && mv -f "\$d/\$ip.tmp.\$\$" "\$d/\$ip" && echo "registered \$h for \$ip"
+EOF
+)
+
+ssh_opts=(-o ConnectTimeout=10)
+[[ -t 0 ]] || ssh_opts+=(-o BatchMode=yes)
+
+if (( dry_run )); then
+  printf 'ssh'; printf ' %q' "${ssh_opts[@]}" "${ssh_args[@]}" "sh -s"; printf '   # Host=%s\n' "$host"
+  exit 0
+fi
+
+echo "Registering $host via: ssh ${ssh_args[*]}"
+printf '%s\n' "$remote_script" | ssh "${ssh_opts[@]}" "${ssh_args[@]}" "sh -s"

@@ -6,5 +6,6 @@ cp ~/.tmux.conf.local ./.tmux.conf.local
 # NOTE: bin directory tools (ssh-tunnel, etc)
 cp ~/bin/ssh-tunnel-manager ./bin/ssh-tunnel-manager
 cp ~/bin/reverse-ssh-tunnel-manager ./bin/reverse-ssh-tunnel-manager
+cp ~/bin/vscode-remote-host-sync ./bin/vscode-remote-host-sync
 
 

@@ -375,19 +375,16 @@ ssh_sshconfig_sync_remote_for_nvim_intergration_vscode() {
   fi
 
   passwordless_ssh $arg1 || return 0
-  # 取出不包含帳號的存 ip
-  # extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
-  if alias `echo "$arg1"` | grep -q "\-J"; then
-    extract_ip_from_remote_ip=$(echo $remote_jump_target_ip | awk -F@ '{print $2}')
-  else
-    extract_ip_from_remote_ip=$(echo $remote_ip | awk -F@ '{print $2}')
-  fi
-  sync_sshconfing_command="
-    grep -P '^Host [a-zA-Z0-9.-:]+|HostName [a-zA-Z0-9.-:]+' /mnt/c/Users/$(wslvar USERNAME)/.ssh/config | tr -d '\r' | sed 's/^[ \t]*//' | paste - - | awk '{print \$2, \$4}' | grep $extract_ip_from_remote_ip | ssh $remote_address 'cat - > ~/.ssh/host_names'
-  "
-  echo $sync_sshconfing_command | sh
+  # 實作在 ~/bin/vscode-remote-host-sync：用 alias 的 ssh 參數（去掉 ssh / -Y / -C）連線，
+  # Host 別名由目標 IP 對照 Windows ssh config 決定，寫入 server 的 ~/.ssh/host_names.d/<IP>
+  # （每個 IP 一個檔案，共用 NFS 的 server 不會互相覆蓋）
+  local ssh_args
+  ssh_args=$(alias "$arg1" | sed -E "s/^alias [^=]+='?//; s/'$//" |
+    awk '{ for (i = 1; i <= NF; i++) if ($i != "ssh" && $i !~ /^-[YC]+$/) printf "%s ", $i }')
+  vscode-remote-host-sync -- $ssh_args
 }
 # ex : ssh_sshconfig_sync_remote_for_nvim_intergration_vscode sshdp
+# 或直接用 Windows ssh config 的 Host 別名（跳板機鏈自動解析）: vscode-remote-host-sync LabServer29
 
 ls_ssh_tools() {
   # 定义忽略清单

@@ -11,6 +11,7 @@ mkdir -p ~/bin/
 cp ./bin/fzf_rg ~/bin/fzf_rg
 cp ./bin/ssh-tunnel-manager ~/bin/ssh-tunnel-manager
 cp ./bin/reverse-ssh-tunnel-manager ~/bin/reverse-ssh-tunnel-manager
+cp ./bin/vscode-remote-host-sync ~/bin/vscode-remote-host-sync
 
 # NOTE: .config directory (ranger)
 mkdir -p ~/.config/
@@ -26,5 +27,6 @@ chmod +x ~/.tmux.conf.local
 chmod +x ~/bin/fzf_rg
 chmod +x ~/bin/ssh-tunnel-manager
 chmod +x ~/bin/reverse-ssh-tunnel-manager
+chmod +x ~/bin/vscode-remote-host-sync
 
 chmod +x ~/.config/ranger/
