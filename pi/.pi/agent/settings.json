@@ -8,7 +8,6 @@
     "npm:pi-session-anchor",
     "npm:pi-command-palette",
     "npm:pi-web-access",
-    "npm:@guwidoe/pi-clipboard-image",
     "npm:@amaster.ai/pi-image-gen",
     "npm:@aliou/pi-processes",
     "npm:pi-tmux-cursor-focus",
