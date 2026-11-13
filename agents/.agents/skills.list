@@ -2,3 +2,44 @@
 # 請在主力機上用 `sync-skills`（互動選單的 add）或 `sync-skills --export` 加入，不要用非主力機的安裝狀態
 # 格式：<source>  <skill>
 # mattpocock/skills        grilling
+UditAkhourii/adhd        adhd
+mattpocock/skills        ask-matt
+uditgoenka/autoresearch  autoresearch
+esso0428/skills          brainstorming
+mattpocock/skills        codebase-design
+mattpocock/skills        code-review
+esso0428/skills          data-repo-gitignore
+mattpocock/skills        design-an-interface
+mattpocock/skills        diagnosing-bugs
+mattpocock/skills        edit-article
+esso0428/skills          executing-roadmap-plan
+vercel-labs/skills       find-skills
+mattpocock/skills        grilling
+mattpocock/skills        grill-me
+mattpocock/skills        grill-with-docs
+mattpocock/skills        handoff
+ESSO0428/hung-yi-lee-ai-mentor-skills hung-yi-lee-ai-mentor-skills
+ayghri/i-have-adhd       i-have-adhd
+mattpocock/skills        implement
+mattpocock/skills        implement-spec
+mattpocock/skills        improve-codebase-architecture
+forrestchang/andrej-karpathy-skills karpathy-guidelines
+mattpocock/skills        prototype
+mattpocock/skills        qa
+mattpocock/skills        request-refactor-plan
+mattpocock/skills        research
+mattpocock/skills        retro
+esso0428/skills          roadmap-track-and-refactor
+humanlayer/skills        show-me
+esso0428/skills          skill-publisher-helper
+Raymondhou0917/speak-human-tw speak-human-tw
+esso0428/skills          talk-human
+mattpocock/skills        teach
+mattpocock/skills        to-questionnaire
+mattpocock/skills        to-tickets
+esso0428/skills          using-git-worktrees
+mattpocock/skills        wait-what
+mattpocock/skills        writing-beats
+mattpocock/skills        writing-for-agents
+mattpocock/skills        writing-great-skills
+esso0428/skills          writing-plans
