@@ -38,18 +38,37 @@ function exclude_docker_port() {
 
 exclude_ports+=($(exclude_docker_port))
 
+# 在遠端 server 寫入 tunnel port（空字串 = 清除）
+#   ~/.ssh/rssh_tunnel.d/<server IP>：每台 server 各自一個檔，共用 NFS home 的 server 不會互相覆蓋
+#   ~/.rssh_tunnel：舊格式，給尚未更新的設定使用（共用 NFS home 時只有最後寫入的那台正確）
+# server IP 由 server 自己計算（預設路由的來源 IP，和 nvim 查詢時同一套規則）
+# 用法：write_remote_tunnel_port <port|""> <ssh target args...>
+function write_remote_tunnel_port() {
+  local value="$1"
+  shift
+  [[ -z "$value" || "$value" =~ ^[0-9]+$ ]] || return 1
+  ssh "$@" sh -s >/dev/null 2>&1 <<EOF
+ip=\$(ip -o route get 8.8.8.8 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')
+[ -n "\$ip" ] || ip=\$(hostname -I 2>/dev/null | awk '{print \$1}')
+if [ -n "\$ip" ]; then
+  mkdir -p "\$HOME/.ssh/rssh_tunnel.d" && chmod 700 "\$HOME/.ssh" && printf '%s' '$value' > "\$HOME/.ssh/rssh_tunnel.d/\$ip"
+fi
+printf '%s' '$value' > "\$HOME/.rssh_tunnel"
+EOF
+}
+
 function cleanup() {
   echo "Cleaning up..."
   pkill "ncat"
   pkill -f "ssh $ssh_options -fNR"
 
-  # 清除所有已处理的 server_ip 相关的 .rssh_tunnel 文件
+  # 清除所有已处理的 server 的 tunnel port 文件
   for ip in "${!processed_ips[@]}"; do
-    ssh -f "${ip}" "echo -n > ~/.rssh_tunnel" >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-      echo "Cleared ~/.rssh_tunnel for ${ip}"
+    # 不加引號：server_ip 可能是 "-J jump target"，port_arg 可能是 "-p N"
+    if write_remote_tunnel_port "" ${ip} ${processed_port_args[$ip]}; then
+      echo "Cleared tunnel port for ${ip}"
     else
-      echo "Failed to clear ~/.rssh_tunnel for ${ip}"
+      echo "Failed to clear tunnel port for ${ip}"
     fi
   done
 
@@ -72,6 +91,8 @@ ssh_connections=$(ps aux | grep "ssh -Y" | grep -v grep)
 
 # 使用關聯陣列來追踪已經處理過的伺服器IP
 declare -A processed_ips
+# 每台 server 的 -p 參數（cleanup 清除 tunnel port 時要用）
+declare -A processed_port_args
 
 # 定義一個函數來尋找可用端口
 find_available_ports() {
@@ -143,11 +164,13 @@ while read -r line <&3; do
     echo "Running: $ncat_cmd"
     $ncat_cmd &
 
-    # 將端口號寫入到遠端的~/.rssh_tunnel文件中
-    ssh -f $server_ip $port_arg "echo $port_to_use > ~/.rssh_tunnel" >/dev/null 2>&1
+    # 將端口號寫入到遠端（~/.ssh/rssh_tunnel.d/<server IP>，以及舊的 ~/.rssh_tunnel）
+    write_remote_tunnel_port "$port_to_use" $server_ip $port_arg ||
+      echo "Failed to write tunnel port to ${server_ip}"
 
     # 标记服务器IP为已处理
     processed_ips[$server_ip]=1
+    processed_port_args[$server_ip]="$port_arg"
   fi
 done
 
