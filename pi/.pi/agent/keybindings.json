@@ -1,10 +1,13 @@
 {
   "tui.editor.cursorWordLeft": [],
   "tui.editor.cursorWordRight": [],
+  "tui.editor.cursorLeft": [],
   "app.tree.foldOrUp": [],
   "app.tree.unfoldOrDown": [],
+  "app.models.toggleProvider": [],
   "app.model.cycleForward": ["alt+shift+right"],
   "app.model.cycleBackward": ["alt+shift+left"],
+  "app.session.togglePath": [],
   "app.thinking.cycle": "ctrl+t",
   "app.thinking.toggle": "ctrl+n"
 }
