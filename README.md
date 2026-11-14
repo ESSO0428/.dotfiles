@@ -158,6 +158,11 @@ sync-skills --export   # overwrite the whole list with what is installed here
 
 Build the list from the main machine (`add`, or `--export`), not from a secondary one.
 
+On Windows the same list is managed by `sync-skills.ps1` (same `add` / `install` / `remove` fzf
+menu, `-Diff`, `-Install`, `-Export`, `-WhatIf`), and `link-claude-skills.ps1` links skills into
+`~\.claude\skills` with junctions. `install.ps1 agents` adds `~\.agents\scripts` to the user
+`PATH`, so `sync-skills` works there too.
+
 ## Windows
 
 `install.ps1` is the Windows counterpart of `install.sh`. It needs **PowerShell 7** (`pwsh`).
@@ -179,7 +184,7 @@ cd $HOME\.dotfiles
 | `claude`    | `~\.claude`, `~\.config\ccstatusline` (shared files)      | symlink   |
 | `opencode`  | `~\.config\opencode`                                      | symlink   |
 | `pi`        | `~\.pi\agent`                                             | symlink   |
-| `agents`    | `~\.agents\skills.list` (bash scripts are skipped)        | symlink   |
+| `agents`    | `~\.agents\skills.list`, `scripts\*.ps1` (bash scripts skipped); adds `~\.agents\scripts` to `PATH`, runs `sync-skills.ps1` | symlink |
 | `vimrc`     | `~\.ideavimrc`, `~\keymap.vim`                            | symlink   |
 | `nvim`      | `%LOCALAPPDATA%\nvim` (Windows-only config)               | junction  |
 | `documents` | `Documents\config.xlaunch`; PowerShell profile only if missing | symlink / copy once |

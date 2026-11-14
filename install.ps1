@@ -10,7 +10,8 @@
   claude       ~/.claude（Windows 版 settings.json 在 windows/overrides）  symlink
   opencode     ~/.config/opencode                                symlink
   pi           ~/.pi/agent                                       symlink
-  agents       ~/.agents/skills.list（.sh 與 bash 腳本不會連結）    symlink
+  agents       ~/.agents/skills.list、scripts/*.ps1（.sh 與 bash 腳本不會連結）  symlink
+               之後把 ~/.agents/scripts 加進使用者 PATH，並執行 sync-skills.ps1
   vimrc        ~/.ideavimrc、~/keymap.vim                         symlink
   nvim         %LOCALAPPDATA%\nvim（整個目錄）                     junction
   documents    Documents\config.xlaunch                           symlink
@@ -65,7 +66,7 @@ $Desc = @{
   'claude'    = 'Claude Code 設定、agents、commands（Windows 版 settings.json）'
   'opencode'  = 'opencode 設定、tui、quota'
   'pi'        = 'pi 設定、sidebar、擴充設定、agents'
-  'agents'    = 'skills 清單'
+  'agents'    = 'skills 清單、sync-skills.ps1（並加進 PATH）'
   'vimrc'     = '.ideavimrc、keymap.vim（JetBrains、VS Code）'
   'nvim'      = 'Windows 版 nvim（%LOCALAPPDATA%\nvim）'
   'documents' = 'config.xlaunch、PowerShell profile（只在不存在時複製）'
@@ -301,12 +302,13 @@ function Install-Entry($e, $mode) {
 function Test-CanSymlink {
   $probe = Join-Path ([IO.Path]::GetTempPath()) "dotfiles-symlink-probe-$PID"
   try {
-    New-Item -ItemType SymbolicLink -Path $probe -Target $PSCommandPath -ErrorAction Stop | Out-Null
+    # -WhatIf:$false：這是能力測試，-WhatIf 時也要真的試，否則永遠回傳「可以」
+    New-Item -ItemType SymbolicLink -Path $probe -Target $PSCommandPath -ErrorAction Stop -WhatIf:$false | Out-Null
     return $true
   } catch {
     return $false
   } finally {
-    Remove-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue -WhatIf:$false
   }
 }
 
@@ -324,6 +326,24 @@ function Invoke-Elevated($work, $mode) {
   $pwsh = (Get-Process -Id $PID).Path
   if ($env:DOTFILES_ELEVATE_DRYRUN) { Write-Host "（DRYRUN）$pwsh $quoted"; return }
   Start-Process -FilePath $pwsh -ArgumentList $quoted -Verb RunAs -Wait -WorkingDirectory $Repo
+}
+
+# agents 裝好之後：把 ~/.agents/scripts 加進使用者 PATH，再跑 sync-skills.ps1
+# 一律在原本的視窗執行（不在系統管理員視窗），npx 裝出來的 skill 才會是這個帳號的
+function Invoke-AgentsExtras($interactive) {
+  $scripts = Join-Path $HomeDir '.agents\scripts'
+  $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+  if (($userPath -split ';') -notcontains $scripts) {
+    if ($Cmdlet.ShouldProcess("使用者 PATH 加入 $scripts")) {
+      [Environment]::SetEnvironmentVariable('Path', (($userPath.TrimEnd(';'), $scripts) -join ';'), 'User')
+      Write-Host "已把 $scripts 加進使用者 PATH（新開的終端機才會生效）"
+    }
+  }
+  $env:Path = "$scripts;$env:Path"
+  Write-Host '== skills'
+  $sync = Join-Path $Repo 'agents\.agents\scripts\sync-skills.ps1'
+  if ($interactive) { & $sync -HomeDir $HomeDir -WhatIf:$WhatIfPreference }
+  else { & $sync -Install -HomeDir $HomeDir -WhatIf:$WhatIfPreference }
 }
 
 # ---------------------------------------------------------------- 互動
@@ -427,6 +447,7 @@ if (($symlinkBlocked -or $adminMissing) -and -not $WhatIfPreference -and -not $E
   if (-not $ans -or $ans.Trim().ToLower() -eq 'y') {
     Invoke-Elevated $work $mode
     Write-Host '系統管理員視窗已結束'
+    if ('agents' -in $work) { Invoke-AgentsExtras $interactive }
     return
   }
   if ($symlinkBlocked) { throw '沒有建立 symlink 的權限，已停止（沒有做任何改動）' }
@@ -445,8 +466,6 @@ if ($adopted) { Write-Host "有 package 以這台為準，請到 $Repo 用 git d
 if ('claude' -in $work -and -not (Get-Command rtk -ErrorAction SilentlyContinue)) {
   Write-Host '提醒：這台沒有 rtk，所以 claude 用的是 windows\overrides 裡沒有 rtk hook 的 settings.json'
 }
-if ('agents' -in $work) {
-  Write-Host '提醒：Windows 版的 sync-skills 還沒寫，skills 請先手動用 npx skills add -g 安裝'
-}
+if ('agents' -in $work -and -not $Elevated) { Invoke-AgentsExtras $interactive }
 Write-Host '完成'
 if ($Elevated) { Read-Host '按 Enter 關閉這個系統管理員視窗' | Out-Null }
