@@ -342,7 +342,8 @@ function Invoke-AgentsExtras($interactive) {
   $env:Path = "$scripts;$env:Path"
   Write-Host '== skills'
   $sync = Join-Path $Repo 'agents\.agents\scripts\sync-skills.ps1'
-  if ($interactive) { & $sync -HomeDir $HomeDir -WhatIf:$WhatIfPreference }
+  # 明確傳 -Interactive：不讓 sync-skills 自己判斷終端機狀態（從 install.ps1 呼叫時可能誤判而直接全部安裝）
+  if ($interactive) { & $sync -Interactive -HomeDir $HomeDir -WhatIf:$WhatIfPreference }
   else { & $sync -Install -HomeDir $HomeDir -WhatIf:$WhatIfPreference }
 }
 
@@ -460,7 +461,8 @@ if (($symlinkBlocked -or $adminMissing) -and -not $WhatIfPreference -and -not $E
   $ans = if ([Environment]::UserInteractive) { Read-Host '要以系統管理員身分在新視窗繼續嗎？會跳出 UAC 視窗 (Y/n)' } else { 'n' }
   if (-not $ans -or $ans.Trim().ToLower() -eq 'y') {
     Invoke-Elevated $work $mode
-    Write-Host '系統管理員視窗已結束'
+    Write-Host '系統管理員視窗已結束，目前狀態：'
+    foreach ($p in $work) { Write-Host "  $(Get-Summary $p)" }
     if ('agents' -in $work) { Invoke-AgentsExtras $interactive }
     return
   }

@@ -90,7 +90,18 @@ function Install-Skills($rows) {
     $npxArgs = @('-y', 'skills', 'add', $g.Name, '-g', '-y')
     foreach ($r in $g.Group) { $npxArgs += '-s', $r.Skill }
     Write-Host "+ npx $($npxArgs -join ' ')"
-    if ($PSCmdlet.ShouldProcess("npx $($npxArgs -join ' ')", '安裝')) { & npx @npxArgs }
+    if ($PSCmdlet.ShouldProcess("npx $($npxArgs -join ' ')", '安裝')) {
+      & npx @npxArgs
+      $code = $LASTEXITCODE
+      if ($code -ne 0) {
+        # 失敗通常是環境問題（例如 Node.js 太舊），後面每一組都會一樣失敗，直接停下來
+        # 先存 exit code：下面執行 node --version 會覆蓋 $LASTEXITCODE
+        $node = (& node --version 2>$null)
+        Write-Warning "npx skills add 失敗（exit $code），已停止，剩下的 skill 沒有安裝。"
+        Write-Warning "目前 Node.js：$(if ($node) { $node } else { '找不到 node' })。若上面的錯誤是 EBADENGINE 或 node:zlib 的 SyntaxError，請升級 Node.js（例如 winget upgrade OpenJS.NodeJS.LTS），再執行 sync-skills -Install"
+        return
+      }
+    }
   }
   if (Test-Path -LiteralPath $Linker) { & $Linker -HomeDir $HomeDir -WhatIf:$WhatIfPreference }
 }
