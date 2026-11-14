@@ -139,17 +139,21 @@ interactive() {
       add)
         chosen=$(states | awk -F'\t' '$1 == "extra"' | pick "要加進清單的 skill（這台已安裝）")
         [ -n "$chosen" ] || continue
+        # fzf 結束時會清掉自己的畫面，先印出選了什麼，捲動紀錄才看得到
+        echo "== add：$(printf '%s\n' "$chosen" | wc -l | tr -d ' ') 個 skill"
         printf '%s\n' "$chosen" | awk -F'\t' '{ printf "%-24s %s\n", $1, $2 }' >> "$LIST"
         echo "已加入清單："; printf '%s\n' "$chosen" | awk -F'\t' '{ print "  " $1 "  " $2 }'
         ;;
       install)
         chosen=$(states | awk -F'\t' '$1 == "missing"' | pick "要安裝的 skill（清單有、這台沒裝）")
         [ -n "$chosen" ] || continue
+        echo "== install：$(printf '%s\n' "$chosen" | wc -l | tr -d ' ') 個 skill"
         printf '%s\n' "$chosen" | install_entries
         ;;
       remove)
         chosen=$(states | awk -F'\t' '$1 == "both" || $1 == "missing"' | pick "要從清單移除的 skill（不會從這台解除安裝）")
         [ -n "$chosen" ] || continue
+        echo "== remove：$(printf '%s\n' "$chosen" | wc -l | tr -d ' ') 個 skill"
         # 保留註解與其他行，只刪掉選中的 skill
         awk 'FNR == NR { split($0, a, "\t"); rm[a[2]]; next }
              { line = $0; sub(/#.*/, "", line); split(line, f, " ") }

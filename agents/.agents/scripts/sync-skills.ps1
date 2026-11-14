@@ -166,17 +166,23 @@ function Invoke-Interactive {
       'add' {
         $chosen = Select-Rows @($rows | Where-Object State -eq 'extra') '要加進清單的 skill（這台已安裝）'
         if (-not $chosen) { continue }
+        # fzf 結束時會清掉自己的畫面，先印出選了什麼，捲動紀錄才看得到
+        Write-Host "== add：$($chosen.Count) 個 skill"
         $lines = @(Get-Content -LiteralPath $List) + @($chosen | ForEach-Object { Format-Line $_.Source $_.Skill })
         Set-ListContent $lines
         Write-Host '已加入清單：'; $chosen | ForEach-Object { Write-Host "  $($_.Source)  $($_.Skill)" }
       }
       'install' {
         $chosen = Select-Rows @($rows | Where-Object State -eq 'missing') '要安裝的 skill（清單有、這台沒裝）'
-        if ($chosen) { Install-Skills $chosen }
+        if ($chosen) {
+          Write-Host "== install：$($chosen.Count) 個 skill"
+          Install-Skills $chosen
+        }
       }
       'remove' {
         $chosen = Select-Rows @($rows | Where-Object State -in 'both', 'missing') '要從清單移除的 skill（不會從這台解除安裝）'
         if (-not $chosen) { continue }
+        Write-Host "== remove：$($chosen.Count) 個 skill"
         $drop = @($chosen.Skill)
         # 保留註解與其他行，只刪掉選中的 skill
         $lines = Get-Content -LiteralPath $List | Where-Object {
