@@ -160,23 +160,35 @@ Build the list from the main machine (`add`, or `--export`), not from a secondar
 
 ## Windows
 
-`windows/` holds the former [`.win-dotfiles`](https://github.com/ESSO0428/.win-dotfiles) repo
-(merged with its history): the Windows-only nvim config, `.ideavimrc` / `keymap.vim`,
-`.obsidian.vimrc`, the PowerShell profile, `im-select.exe` and `Nvim-QT-Right-Click.reg`.
-`install.sh` never touches it.
-
-The layout inside `windows/` is still the old one, so its scripts keep working. Run them from a
-Windows clone of this repo (not through `\\wsl.localhost`):
+`install.ps1` is the Windows counterpart of `install.sh`. It needs **PowerShell 7** (`pwsh`) and
+Windows **Developer Mode** (Settings → System → For developers), otherwise creating symlinks needs
+an administrator shell. Run it from a Windows clone, not through `\\wsl.localhost`:
 
 ```powershell
-cd $HOME\.dotfiles\windows
-.\LoadMyVimKeyMapForAllEditorOnly.ps1   # nvim, IdeaVim, Obsidian vimrc
-.\LoadUserDocument.ps1                  # PowerShell profile
-.\CopyImSelectToSystemPath.ps1          # im-select.exe (C:\Windows needs admin)
+git clone git@github.com:ESSO0428/.dotfiles.git $HOME\.dotfiles
+cd $HOME\.dotfiles
+.\install.ps1 -WhatIf      # preview
+.\install.ps1              # interactive, same flow as install.sh (-Interactive to force it)
+.\install.ps1 -Status      # each target's state
 ```
 
-These copy files. They will be replaced by an `install.ps1` that links the shared agent configs
-(`claude/`, `pi/`, `agents/`, `opencode/`) as well. See `windows/README.md` for details.
+| package     | target                                                    | how       |
+|-------------|-----------------------------------------------------------|-----------|
+| `claude`    | `~\.claude`, `~\.config\ccstatusline` (shared files)      | symlink   |
+| `opencode`  | `~\.config\opencode`                                      | symlink   |
+| `pi`        | `~\.pi\agent`                                             | symlink   |
+| `agents`    | `~\.agents\skills.list` (bash scripts are skipped)        | symlink   |
+| `vimrc`     | `~\.ideavimrc`, `~\keymap.vim`                            | symlink   |
+| `nvim`      | `%LOCALAPPDATA%\nvim` (Windows-only config)               | junction  |
+| `documents` | `Documents\config.xlaunch`; PowerShell profile only if missing | symlink / copy once |
+| `obsidian`  | `OneDrive\應用程式\remotely-save\Obsidian Vault\.obsidian.vimrc` | copy |
+| `im-select` | `~\im-select.exe`, `C:\Windows\im-select.exe` (admin)    | copy      |
+
+`windows/overrides/<package>/` replaces a shared file on Windows only, for example
+`windows/overrides/claude/.claude/settings.json` drops the `rtk hook`. Everything else under
+`windows/` (from the former [`.win-dotfiles`](https://github.com/ESSO0428/.win-dotfiles) repo,
+merged with its history) is Windows-only and never touched by `install.sh`. See
+[`windows/README.md`](windows/README.md).
 
 ## Rc Files, `.profile` or other dotfiles
 

@@ -4,41 +4,45 @@ author: Andy6
 date: Saturday, March, 02, 2024
 ---
 
-# My Win-Dotfiles
+# Windows dotfiles
 
-## Install My Windows environment
+Formerly the [`.win-dotfiles`](https://github.com/ESSO0428/.win-dotfiles) repo, merged into
+`.dotfiles` with its history. Install with `install.ps1` at the repo root (see the root README);
+the old `LoadMyVimKeyMapForAllEditorOnly.ps1`, `LoadUserDocument.ps1` and
+`CopyImSelectToSystemPath.ps1` copy scripts were replaced by it.
 
-Will write when I have time
-
-## VimKeyMap For Any Available Editor
-
-This Directory contains the **VimKeyMap** for below available editor
-and path to the configuration file for below editors.
-
-```powershell
-# In user directory run below command, can get all vimkeymap config
-.\.win-dotfiles\LoadMyVimKeyMapForAllEditorOnly.ps1
+```text
+windows/
+├── home/                 → ~               .ideavimrc (JetBrains), keymap.vim (VS Code)
+├── localappdata/nvim/    → %LOCALAPPDATA%\nvim   Windows-only Neovim / Neovim Qt config
+├── documents/            → Documents       config.xlaunch, PowerShell profile (template)
+├── obsidian/             → Obsidian Vault  .obsidian.vimrc (copied, the vault syncs via OneDrive)
+├── overrides/<package>/  replaces a shared file on Windows (claude settings.json without rtk)
+├── im-select.exe         → ~ and C:\Windows (copied)
+└── Nvim-QT-Right-Click.reg   import by hand
 ```
 
-### Visual Studio Code
+## VimKeyMap for other editors
 
-Copy paste [./VimKeyMap/keymap.vim](./VimKeyMap/keymap.vim) to below **C:\Users\Andy6**
+- **Visual Studio Code**: `keymap.vim` in `C:\Users\Andy6`
+- **JetBrains IDE**: `.ideavimrc` in `C:\Users\Andy6`
+- **Obsidian**: `.obsidian.vimrc` in the vault. The vault lives in
+  `OneDrive\應用程式\remotely-save\Obsidian Vault` (`Apps` / `Applications` on English Windows),
+  so `install.ps1` copies it there instead of linking.
 
-### Jetbrains IDE
+## Neovim
 
-Copy paste [./VimKeyMap/.ideavimrc](./VimKeyMap/.ideavimrc) to below **C:\Users\Andy6**
-
-### Obsidian
-
-Copy paste [./VimKeyMap/.obsidian.vimrc](./VimKeyMap/.obsidian.vimrc) to below **C:\Users\Andy6\Documents\Obsidian Vault**
+`localappdata/nvim/` is a separate, lighter config than the Linux one in `~/.config/nvim`:
+Windows is slower, so it keeps fewer plugins. `install.ps1` links the whole directory with a
+junction (no admin needed).
 
 ### Neovim Qt
 
-This is the neovim editor with GUI (For Windows).
+Right-click menu: import `Nvim-QT-Right-Click.reg` (double-click it, needs admin). It points to
+`C:\Program Files\neovim-qt 0.2.18\bin\nvim-qt.exe`; update the path after upgrading Neovim Qt.
 
-Copy paste files of [./VimKeyMap/nvim/](./VimKeyMap/nvim/) to **C:\Users\Andy6\AppData\Local\nvim**
+Desktop shortcut:
 
-Create link to desktop
 ```powershell
 # NOTE: This script creates a Neovim Qt shortcut on the desktop.
 #       If the shortcut already exists, it will be deleted and recreated (overwrite behavior).
@@ -58,20 +62,18 @@ $Shortcut.Description = "Launch Neovim Qt in Home Folder"
 $Shortcut.Save()
 ```
 
-### Other
+## PowerShell profile
 
-`im-select.exe` is a tool to switch between input methods on Windows.
+`documents/PowerShell/Microsoft.PowerShell_profile.ps1` is a template: `install.ps1` copies it
+only when `Documents\PowerShell\` has none, because installers (conda, Chocolatey) append to the
+live profile. For conda, run `conda init powershell` instead of copying
+`documents/PowerShell/profile.ps1` (its path to `anaconda3` is machine specific).
 
-- `im-select.exe` also support vscode, obsidian, neovim/lunavim (remote or wsl)
-  + For remote neovim/lunavim, need to `reverse ssh tunnel` to local machine
-    * And vimscripts setting (for my vimscript have support; not in this
-    directory; just offer user guide in here)
-  + Install directories are below
-    * **C:\Windows**
-    * **C:\Users\Andy6**
-  + Download link : [here](https://github.com/daipeihust/im-select/raw/master/win/out/x86/im-select.exe)
-    * Have `im-select.exe` in this directory, but if you want to get the latest version, you can download from the link above.
-  + Run below command will auto process
-    ```powershell
-    .\.win-dotfiles\CopyImSelectToSystemPath.ps1
-    ```
+## im-select
+
+`im-select.exe` switches input methods on Windows. It also serves VS Code, Obsidian and Neovim /
+LunarVim (remote or WSL; remote needs a reverse ssh tunnel, see `reverse-ssh-tunnel-manager` in
+the root README).
+
+- Installed to `C:\Windows` and `C:\Users\Andy6` (`C:\Windows` needs an administrator shell).
+- Latest version: [download](https://github.com/daipeihust/im-select/raw/master/win/out/x86/im-select.exe)
