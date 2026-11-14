@@ -65,12 +65,13 @@ function Get-Wanted {
 # 對照：State（both / missing / extra）、Source、Skill
 function Get-States {
   $w = Get-Wanted; $i = Get-Installed
-  $rows = foreach ($s in $w.Keys) {
+  # @()：迴圈只產生一個結果時不是陣列，後面的 += 會失敗（清單剛好一項時）
+  $rows = @(foreach ($s in $w.Keys) {
     [pscustomobject]@{ State = $(if ($i.Contains($s)) { 'both' } else { 'missing' }); Source = $w[$s]; Skill = $s }
-  }
-  $rows += foreach ($s in $i.Keys) {
+  })
+  $rows += @(foreach ($s in $i.Keys) {
     if (-not $w.Contains($s)) { [pscustomobject]@{ State = 'extra'; Source = $i[$s]; Skill = $s } }
-  }
+  })
   return $rows | Sort-Object Skill
 }
 
@@ -98,7 +99,9 @@ function Install-Skills($rows) {
         # 先存 exit code：下面執行 node --version 會覆蓋 $LASTEXITCODE
         $node = (& node --version 2>$null)
         Write-Warning "npx skills add 失敗（exit $code），已停止，剩下的 skill 沒有安裝。"
-        Write-Warning "目前 Node.js：$(if ($node) { $node } else { '找不到 node' })。若上面的錯誤是 EBADENGINE 或 node:zlib 的 SyntaxError，請升級 Node.js（例如 winget upgrade OpenJS.NodeJS.LTS），再執行 sync-skills -Install"
+        Write-Warning "目前 Node.js：$(if ($node) { $node } else { '找不到 node' })。若上面的錯誤是 EBADENGINE 或 node:zlib 的 SyntaxError，代表 Node.js 太舊（skills 需要 22 以上）"
+        Write-Warning "  winget 安裝的話：winget list --name Node.js 看識別碼；若是 OpenJS.NodeJS.21 這類固定主版號的套件，upgrade 不會跨主版號，"
+        Write-Warning "  要先 winget uninstall <識別碼>，再 winget install OpenJS.NodeJS.LTS。升級後開新的終端機，執行 sync-skills -Install"
         return
       }
     }
