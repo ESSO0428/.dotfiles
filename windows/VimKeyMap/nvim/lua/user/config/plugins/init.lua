@@ -1,0 +1,6 @@
+require "user.config.plugins.interestingwords"
+require "user.config.plugins.headline"
+require "user.config.plugins.MarkdownNvim"
+require "user.config.plugins.fold"
+require "user.config.plugins.nvim_lightbulb"
+require "user.config.plugins.bioinformatics"
