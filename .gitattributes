@@ -1,0 +1,11 @@
+# 兩個平台共用同一個 repo：repo 裡一律存 LF，Windows 的 clone 也維持 LF
+# （PowerShell、nvim、Git for Windows 都能讀 LF；避免 WSL 和 Windows 兩份 clone 互相顯示整檔被修改）
+* text=auto eol=lf
+
+# 原樣保存，不轉換換行
+*.exe binary
+*.reg binary
+
+# 之後若新增 .cmd / .bat，cmd.exe 需要 CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf

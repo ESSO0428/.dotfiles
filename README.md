@@ -12,6 +12,7 @@ date: Saturday, September 23, 2023
   - [Packages](#packages)
   - [Shell: rc files, shared files and `*.local`](#shell-rc-files-shared-files-and-local)
   - [Agent configs](#agent-configs)
+  - [Windows](#windows)
   - [Rc Files, `.profile` or other dotfiles](#rc-files-profile-or-other-dotfiles)
   - [Tools](#tools)
 <!--toc:end-->
@@ -156,6 +157,26 @@ sync-skills --export   # overwrite the whole list with what is installed here
 ```
 
 Build the list from the main machine (`add`, or `--export`), not from a secondary one.
+
+## Windows
+
+`windows/` holds the former [`.win-dotfiles`](https://github.com/ESSO0428/.win-dotfiles) repo
+(merged with its history): the Windows-only nvim config, `.ideavimrc` / `keymap.vim`,
+`.obsidian.vimrc`, the PowerShell profile, `im-select.exe` and `Nvim-QT-Right-Click.reg`.
+`install.sh` never touches it.
+
+The layout inside `windows/` is still the old one, so its scripts keep working. Run them from a
+Windows clone of this repo (not through `\\wsl.localhost`):
+
+```powershell
+cd $HOME\.dotfiles\windows
+.\LoadMyVimKeyMapForAllEditorOnly.ps1   # nvim, IdeaVim, Obsidian vimrc
+.\LoadUserDocument.ps1                  # PowerShell profile
+.\CopyImSelectToSystemPath.ps1          # im-select.exe (C:\Windows needs admin)
+```
+
+These copy files. They will be replaced by an `install.ps1` that links the shared agent configs
+(`claude/`, `pi/`, `agents/`, `opencode/`) as well. See `windows/README.md` for details.
 
 ## Rc Files, `.profile` or other dotfiles
 
