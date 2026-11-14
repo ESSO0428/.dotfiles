@@ -20,8 +20,9 @@
 
   目標已存在、而且不是指向 repo 的檔案，預設先搬到 ~/.dotfiles-backup/<時間>/ 再連結（repo 版本優先）。
 
-  建立 symlink 需要開啟 Windows 的「開發人員模式」，並使用 PowerShell 7（pwsh）。
-  Windows PowerShell 5.1 即使開了開發人員模式，建立 symlink 仍需要系統管理員權限。
+  需要 PowerShell 7（pwsh）。建立 symlink 需要「開發人員模式」或系統管理員權限：
+  兩者都沒有時（或要複製 im-select.exe 到 C:\Windows 時），會詢問是否以系統管理員身分在新視窗
+  繼續（跳出 UAC）。提權後仍是同一個帳號；目標路徑會在提權前決定好再傳過去。
 
 .EXAMPLE
   .\install.ps1                      # 互動模式
@@ -44,7 +45,11 @@ param(
   # 測試用：改變目標位置
   [string]$HomeDir = $HOME,
   [string]$LocalAppData = $env:LOCALAPPDATA,
-  [string]$Documents = [Environment]::GetFolderPath('MyDocuments')
+  [string]$Documents = [Environment]::GetFolderPath('MyDocuments'),
+  [string]$OneDriveRoot = '',
+  # 內部用：自動提權後的視窗用來接續執行，格式 "claude=repo,pi=adopt"
+  [string]$Plan = '',
+  [switch]$Elevated
 )
 
 $ErrorActionPreference = 'Stop'
@@ -100,7 +105,7 @@ function Get-SharedEntries($pkg) {
 }
 
 function Find-ObsidianVault {
-  $roots = @($env:OneDriveConsumer, $env:OneDrive, (Join-Path $HomeDir 'OneDrive')) |
+  $roots = @($OneDriveRoot, $env:OneDriveConsumer, $env:OneDrive, (Join-Path $HomeDir 'OneDrive')) |
     Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
   foreach ($root in $roots) {
     foreach ($apps in '應用程式', 'Apps', 'Applications') {
@@ -292,16 +297,33 @@ function Install-Entry($e, $mode) {
   }
 }
 
-# 建立 symlink 需要開發人員模式（junction 不需要）
-function Assert-CanSymlink {
+# 建立 symlink 需要開發人員模式或系統管理員（junction 不需要）
+function Test-CanSymlink {
   $probe = Join-Path ([IO.Path]::GetTempPath()) "dotfiles-symlink-probe-$PID"
   try {
     New-Item -ItemType SymbolicLink -Path $probe -Target $PSCommandPath -ErrorAction Stop | Out-Null
+    return $true
   } catch {
-    throw "無法建立 symlink。請開啟「設定 → 系統 → 開發人員專用 → 開發人員模式」，或以系統管理員身分執行。"
+    return $false
   } finally {
     Remove-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
   }
+}
+
+# 以系統管理員身分在新視窗重新執行，並等它結束
+# 目標路徑在提權前就決定好再傳過去：若 UAC 用的是另一個系統管理員帳號，$HOME 會變成那個帳號的
+function Invoke-Elevated($work, $mode) {
+  $plan = ($work | ForEach-Object { "$_=$($mode[$_])" }) -join ','
+  $oneDrive = @($OneDriveRoot, $env:OneDriveConsumer, $env:OneDrive) | Where-Object { $_ } | Select-Object -First 1
+  $argList = @(
+    '-NoProfile', '-File', $PSCommandPath, '-Elevated', '-Plan', $plan,
+    '-HomeDir', $HomeDir, '-LocalAppData', $LocalAppData, '-Documents', $Documents
+  )
+  if ($oneDrive) { $argList += '-OneDriveRoot', $oneDrive }
+  $quoted = ($argList | ForEach-Object { if ($_ -match '^-\w+$') { $_ } else { '"' + $_ + '"' } }) -join ' '
+  $pwsh = (Get-Process -Id $PID).Path
+  if ($env:DOTFILES_ELEVATE_DRYRUN) { Write-Host "（DRYRUN）$pwsh $quoted"; return }
+  Start-Process -FilePath $pwsh -ArgumentList $quoted -Verb RunAs -Wait -WorkingDirectory $Repo
 }
 
 # ---------------------------------------------------------------- 互動
@@ -356,9 +378,17 @@ if ($Status) {
   return
 }
 
-$interactive = $Interactive -or (-not ($Packages -or $All -or $Adopt) -and [Environment]::UserInteractive -and -not [Console]::IsInputRedirected)
+$interactive = -not $Plan -and ($Interactive -or (-not ($Packages -or $All -or $Adopt) -and [Environment]::UserInteractive -and -not [Console]::IsInputRedirected))
 $mode = @{}
-if ($interactive) {
+if ($Plan) {
+  # 提權後接續執行：沿用原本視窗選好的 package 與模式
+  $Packages = @()
+  foreach ($item in $Plan -split ',') {
+    $p, $m = $item -split '=', 2
+    if ($p -notin $AllPackages -or $m -notin 'repo', 'adopt', 'skip') { throw "無法解析 -Plan：$item" }
+    $Packages += $p; $mode[$p] = $m
+  }
+} elseif ($interactive) {
   $Packages = @(Select-Packages)
   if (-not $Packages) { Write-Host '沒有選擇任何 package'; return }
   foreach ($p in $Packages) { $mode[$p] = Select-Mode $p }
@@ -380,9 +410,28 @@ if ($interactive) {
 }
 
 $work = @($Packages | Where-Object { $mode[$_] -ne 'skip' })
-$needSymlink = $work | ForEach-Object { Get-Entries $_ } |
-  Where-Object { $_.Kind -eq 'link' -and (Get-State $_) -ne 'linked' }
-if ($needSymlink -and -not $WhatIfPreference) { Assert-CanSymlink }
+$entries = @($work | ForEach-Object { Get-Entries $_ })
+$needSymlink = @($entries | Where-Object { $_.Kind -eq 'link' -and (Get-State $_) -ne 'linked' }).Count -gt 0
+$needWindowsDir = @($entries | Where-Object { $_.Target -like 'C:\Windows\*' -and (Get-State $_) -notin 'same', 'linked' }).Count -gt 0
+$symlinkBlocked = $needSymlink -and -not (Test-CanSymlink)
+$adminMissing = $needWindowsDir -and -not (Test-Admin)
+
+if (($symlinkBlocked -or $adminMissing) -and -not $WhatIfPreference -and -not $Elevated) {
+  $why = @()
+  if ($symlinkBlocked) { $why += '建立 symlink（沒有開發人員模式）' }
+  if ($adminMissing) { $why += '複製 im-select.exe 到 C:\Windows' }
+  Write-Host ''
+  Write-Host "需要系統管理員權限：$($why -join '、')"
+  Write-Host '（或開啟「設定 → 系統 → 開發人員專用 → 開發人員模式」，之後建立 symlink 就不必提權）'
+  $ans = if ([Environment]::UserInteractive) { Read-Host '要以系統管理員身分在新視窗繼續嗎？會跳出 UAC 視窗 (Y/n)' } else { 'n' }
+  if (-not $ans -or $ans.Trim().ToLower() -eq 'y') {
+    Invoke-Elevated $work $mode
+    Write-Host '系統管理員視窗已結束'
+    return
+  }
+  if ($symlinkBlocked) { throw '沒有建立 symlink 的權限，已停止（沒有做任何改動）' }
+  # 只缺 C:\Windows：繼續執行，那一項會被略過
+}
 
 $adopted = $false
 foreach ($p in $work) {
@@ -400,3 +449,4 @@ if ('agents' -in $work) {
   Write-Host '提醒：Windows 版的 sync-skills 還沒寫，skills 請先手動用 npx skills add -g 安裝'
 }
 Write-Host '完成'
+if ($Elevated) { Read-Host '按 Enter 關閉這個系統管理員視窗' | Out-Null }

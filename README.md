@@ -160,9 +160,11 @@ Build the list from the main machine (`add`, or `--export`), not from a secondar
 
 ## Windows
 
-`install.ps1` is the Windows counterpart of `install.sh`. It needs **PowerShell 7** (`pwsh`) and
-Windows **Developer Mode** (Settings → System → For developers), otherwise creating symlinks needs
-an administrator shell. Run it from a Windows clone, not through `\\wsl.localhost`:
+`install.ps1` is the Windows counterpart of `install.sh`. It needs **PowerShell 7** (`pwsh`).
+Creating symlinks needs Windows **Developer Mode** (Settings → System → For developers) or admin
+rights; without either (or when copying `im-select.exe` into `C:\Windows`) it offers to continue in
+an elevated window via UAC, still as your account and with the target paths decided beforehand.
+Run it from a Windows clone, not through `\\wsl.localhost`:
 
 ```powershell
 git clone git@github.com:ESSO0428/.dotfiles.git $HOME\.dotfiles
