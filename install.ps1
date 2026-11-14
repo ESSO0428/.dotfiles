@@ -348,6 +348,20 @@ function Invoke-AgentsExtras($interactive) {
 
 # ---------------------------------------------------------------- 互動
 function Select-Packages {
+  # 有 fzf：複選，右側預覽每個檔案的狀態（和 install.sh 一樣）
+  if (Get-Command fzf -ErrorAction SilentlyContinue) {
+    $pwsh = (Get-Process -Id $PID).Path
+    $preview = "`"$pwsh`" -NoProfile -File `"$PSCommandPath`" -Status {1} " +
+      "-HomeDir `"$HomeDir`" -LocalAppData `"$LocalAppData`" -Documents `"$Documents`""
+    if ($OneDriveRoot) { $preview += " -OneDriveRoot `"$OneDriveRoot`"" }
+    $picked = $AllPackages | ForEach-Object { Get-Summary $_ } |
+      fzf --multi --reverse --height=80% --prompt='package> ' `
+        --header="Tab 勾選（可複選）、Ctrl-A 全選、Enter 確認、Esc 取消`n右側是每個檔案的狀態：✔ 已連結  ＋ 新增  ＝ 相同  ≠ 不同  ・ 保留" `
+        --bind=ctrl-a:select-all --preview=$preview --preview-window=right,55%,wrap
+    return @($picked | ForEach-Object { ($_ -split '\s+')[0] } | Where-Object { $_ -in $AllPackages })
+  }
+
+  # 沒有 fzf：編號切換選單
   $selected = @{}
   while ($true) {
     Write-Host ''
