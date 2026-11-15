@@ -1,0 +1,8 @@
+onboarding = false
+[keys]
+prefix = "ctrl+h"
+
+[ui]
+# 開啟時預設折疊 sidebar
+sidebar_collapsed_mode = "compact"
+# 使用 prefix+b 可以關閉左側 siderbar

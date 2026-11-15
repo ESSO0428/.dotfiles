@@ -14,7 +14,7 @@
 set -euo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ALL_PACKAGES=(shell vim tmux bin ranger claude opencode pi agents)
+ALL_PACKAGES=(shell vim tmux bin ranger herdr claude opencode pi agents)
 STOW_VERSION="2.4.1"
 DRY_RUN="${DRY_RUN:-0}"
 BACKUP="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
@@ -25,6 +25,7 @@ declare -A DESC=(
   [tmux]="oh-my-tmux 的 .tmux.conf、.tmux.conf.local"
   [bin]="~/bin 工具（fzf_rg、ssh-tunnel-manager…）"
   [ranger]=".config/ranger/"
+  [herdr]=".config/herdr/config.toml（prefix、sidebar）"
   [claude]="Claude Code 設定、agents、commands、ccstatusline"
   [opencode]="opencode 設定、tui、quota"
   [pi]="pi 設定、sidebar、擴充設定、agents"

@@ -81,6 +81,7 @@ DRY_RUN=1 ./install.sh --all    # preview
 | `tmux`     | `.tmux/.tmux.conf`, `.tmux.conf.local` ([oh-my-tmux](https://github.com/gpakosz/.tmux) is cloned first if `~/.tmux` is missing) |
 | `bin`      | `~/bin/*` tools (see [Tools](#tools))                                          |
 | `ranger`   | `.config/ranger/`                                                              |
+| `herdr`    | `.config/herdr/config.toml` (sessions and release notes are not tracked)       |
 | `claude`   | `.claude/{CLAUDE.md,RTK.md,settings.json,keybindings.json,agents/,commands/}`, `.config/ccstatusline/settings.json` |
 | `opencode` | `.config/opencode/{opencode.jsonc,tui.json,dcp.jsonc,package.json,opencode-quota/}` |
 | `pi`       | `.pi/agent/{settings.json,keybindings.json,sidebar-ui.json,pi-cc-extensions.json,pi-command-palette.json,agent-switcher.json,pi-goal.json,agents/,extensions/*.json}` |
