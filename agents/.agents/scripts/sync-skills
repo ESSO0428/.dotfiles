@@ -4,7 +4,8 @@
 # 用法：
 #   sync-skills            互動模式（終端機 + fzf）：把這台的 skill 加進清單 / 補裝 / 從清單移除
 #                          沒有 fzf 或不在終端機時，等同 --install
-#   sync-skills --install  補裝清單裡有、這台沒裝的 skill，再把 skill 連到 ~/.claude/skills
+#   sync-skills --install  補裝清單裡有、這台沒裝的 skill，再把 skill 連到 ~/.claude/skills，
+#                          並依 ~/.agents/skills-env.list 用 uv 建好 skill 的 Python 環境
 #   sync-skills --diff     只列出差異：清單有但沒裝 / 有裝但不在清單
 #   sync-skills --export   用這台的安裝狀態覆寫整份清單（只在主力機上跑，跑完用 git diff 檢查）
 #
@@ -19,6 +20,7 @@ LIST="${SKILLS_LIST:-$HOME/.agents/skills.list}"
 LOCK="$HOME/.agents/.skill-lock.json"
 SKILLS_DIR="$HOME/.agents/skills"
 LINKER="$HOME/.agents/scripts/link-claude-skills.sh"
+ENV_LIST="${SKILLS_ENV_LIST:-$HOME/.agents/skills-env.list}"
 DRY_RUN="${DRY_RUN:-0}"
 
 run() { echo "+ $*"; [ "$DRY_RUN" = 1 ] || "$@"; }
@@ -67,18 +69,70 @@ states() {
 # 寫回清單：LIST 可能是 stow 建的 symlink，用 cat > 寫回原檔而不是換掉 symlink
 write_list() { local tmp; tmp=$(mktemp); cat > "$tmp"; cat "$tmp" > "$LIST"; rm -f "$tmp"; }
 
-# 從 stdin 讀 <source>\t<skill>，依來源分組安裝，最後重建 ~/.claude/skills 的連結
+# 在一個 skill 目錄內建 uv 環境；$1 是目錄，其餘是 uv sync 的額外參數
+setup_env_one() {
+  local dir="$1" py="" prev=""; shift
+  for a in "$@"; do [ "$prev" = --python ] && py="$a"; prev="$a"; done
+  if [ ! -f "$dir/pyproject.toml" ]; then
+    [ -f "$dir/requirements.txt" ] || { echo "沒有 pyproject.toml 也沒有 requirements.txt" >&2; return 1; }
+    # 沒指定 --python 時 uv init 會拿系統 python（可能太舊）當 requires-python 下限，所以一定要指定
+    [ -n "$py" ] || { echo "只有 requirements.txt 的 skill 要在 skills-env.list 指定 --python" >&2; return 1; }
+    run uv init -q --bare --no-workspace --python "$py" "$dir" &&
+      run uv add -q --project "$dir" --no-sync -r "$dir/requirements.txt" || return 1
+  fi
+  run uv sync -q --project "$dir" "$@"
+}
+
+# 依 skills-env.list 建環境；有裝、帶 Python 依賴、卻沒列入清單的 skill 只提醒
+setup_envs() {
+  local skill args dir listed=" "
+  if [ -f "$ENV_LIST" ]; then
+    while read -r skill args; do
+      listed+="$skill "
+      dir="$SKILLS_DIR/$skill"
+      [ -d "$dir" ] || continue
+      if ! command -v uv >/dev/null 2>&1; then
+        echo "warn: 找不到 uv，略過 $skill 的 Python 環境（裝好 uv 後重跑 sync-skills --install）" >&2
+        continue
+      fi
+      echo "== Python 環境：$skill"
+      # shellcheck disable=SC2086  # args 是多個 uv 參數，要拆開
+      setup_env_one "$dir" $args || echo "warn: $skill 的 Python 環境建立失敗" >&2
+    done < <(sed -e 's/#.*//' "$ENV_LIST" | awk 'NF')
+  fi
+  for dir in "$SKILLS_DIR"/*/; do
+    skill=$(basename "$dir")
+    case "$listed" in *" $skill "*) continue ;; esac
+    if [ -f "$dir/pyproject.toml" ] || [ -f "$dir/requirements.txt" ]; then
+      echo "warn: $skill 帶有 Python 依賴，但不在 $ENV_LIST，沒有建環境" >&2
+    fi
+  done
+}
+
+# 從 stdin 讀 <source>\t<skill>，依來源分組安裝，再重建 ~/.claude/skills 的連結、建 Python 環境
 install_entries() {
-  local src skills s args
+  local entries src skills s args still
+  entries=$(cat)
   while IFS=$'\t' read -r src skills; do
     args=()
     for s in $skills; do args+=(-s "$s"); done
-    run npx -y skills add "$src" -g -y "${args[@]}"
-  done < <(awk -F'\t' 'NF >= 2 { a[$1] = a[$1] " " $2 } END { for (k in a) print k "\t" a[k] }')
+    # 要的 skill 全都不存在時 npx 會失敗；不要讓 set -e 中斷，其他來源、連結、環境照常處理
+    run npx -y skills add "$src" -g -y "${args[@]}" || echo "warn: npx skills add $src 失敗" >&2
+  done < <(printf '%s\n' "$entries" | awk -F'\t' 'NF >= 2 { a[$1] = a[$1] " " $2 } END { for (k in a) print k "\t" a[k] }')
+  # npx skills add 找不到 skill 時不會報錯，只會默默跳過（例如上游已刪除或改名），裝完再對一次
+  if [ "$DRY_RUN" != 1 ] && [ -n "$entries" ]; then
+    still=$(states | awk -F'\t' '$1 == "missing" { print $3 }' |
+      grep -Fxf <(printf '%s\n' "$entries" | cut -f2) || true)
+    if [ -n "$still" ]; then
+      echo "warn: 下列 skill 裝完仍不存在，上游可能已刪除或改名，請檢查來源後更新清單：" >&2
+      printf '  %s\n' $still >&2
+    fi
+  fi
   # link-claude-skills.sh 自己支援 DRY_RUN
   if [ -f "$LINKER" ]; then
     DRY_RUN="$DRY_RUN" bash "$LINKER"
   fi
+  setup_envs
 }
 
 cmd_install() {

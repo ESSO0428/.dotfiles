@@ -1,0 +1,13 @@
+# 需要 Python 環境的 skill（sync-skills 安裝完會讀這份，在 skill 目錄內用 uv 建 .venv）
+# 格式：<skill>  [uv sync 額外參數...]
+#
+# skill 有 pyproject.toml → uv sync
+# 只有 requirements.txt   → 先用 uv init + uv add -r 產生 pyproject.toml，再 uv sync；
+#                           一定要寫 --python（照 skill README 的版本要求），它同時決定 requires-python 下限
+# 之後一律用 `uv run --project <skill 目錄> python <腳本>` 執行
+#
+# 每次 sync-skills --install 都會重跑（已建好的只做增量），所以 npx skills update 之後重跑一次即可補回環境。
+# 有裝、帶 Python 依賴、卻不在這份清單的 skill，sync-skills 會提醒。
+hung-yi-lee-ai-mentor-skills  --extra analysis
+# README 要求 Python 3.10+
+ppt-master  --python 3.12

@@ -9,9 +9,7 @@ esso0428/skills          brainstorming
 mattpocock/skills        codebase-design
 mattpocock/skills        code-review
 esso0428/skills          data-repo-gitignore
-mattpocock/skills        design-an-interface
 mattpocock/skills        diagnosing-bugs
-mattpocock/skills        edit-article
 esso0428/skills          executing-roadmap-plan
 vercel-labs/skills       find-skills
 mattpocock/skills        grilling
@@ -24,9 +22,8 @@ mattpocock/skills        implement
 mattpocock/skills        implement-spec
 mattpocock/skills        improve-codebase-architecture
 forrestchang/andrej-karpathy-skills karpathy-guidelines
+hugohe3/ppt-master       ppt-master
 mattpocock/skills        prototype
-mattpocock/skills        qa
-mattpocock/skills        request-refactor-plan
 mattpocock/skills        research
 mattpocock/skills        retro
 esso0428/skills          roadmap-track-and-refactor
@@ -41,5 +38,4 @@ esso0428/skills          using-git-worktrees
 mattpocock/skills        wait-what
 mattpocock/skills        writing-beats
 mattpocock/skills        writing-for-agents
-mattpocock/skills        writing-great-skills
 esso0428/skills          writing-plans

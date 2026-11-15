@@ -7,7 +7,8 @@
   和 bash 版 sync-skills 共用同一份 skills.list，功能相同：
     sync-skills.ps1            互動模式（需要 fzf）：add 把這台的 skill 加進清單 / install 補裝 / remove 從清單移除
                                沒有 fzf 或不在終端機時，等同 -Install
-    sync-skills.ps1 -Install   補裝清單裡有、這台沒裝的 skill，再把 skill 連到 ~/.claude/skills
+    sync-skills.ps1 -Install   補裝清單裡有、這台沒裝的 skill，再把 skill 連到 ~/.claude/skills，
+                               並依 ~/.agents/skills-env.list 用 uv 建好 skill 的 Python 環境
     sync-skills.ps1 -Diff      只列出差異：清單有但沒裝 / 有裝但不在清單
     sync-skills.ps1 -Export    用這台的安裝狀態覆寫整份清單（只在主力機上跑，跑完用 git diff 檢查）
   加上 -WhatIf 只顯示會執行的指令。
@@ -36,6 +37,7 @@ if (-not $List) { $List = Join-Path $HomeDir '.agents\skills.list' }
 $Lock = Join-Path $HomeDir '.agents\.skill-lock.json'
 $SkillsDir = Join-Path $HomeDir '.agents\skills'
 $Linker = Join-Path $PSScriptRoot 'link-claude-skills.ps1'
+$EnvList = Join-Path $HomeDir '.agents\skills-env.list'
 
 function Assert-List {
   if (-not (Test-Path -LiteralPath $List)) { throw "找不到清單 $List，請先執行 install.ps1 agents" }
@@ -95,18 +97,79 @@ function Install-Skills($rows) {
       & npx @npxArgs
       $code = $LASTEXITCODE
       if ($code -ne 0) {
-        # 失敗通常是環境問題（例如 Node.js 太舊），後面每一組都會一樣失敗，直接停下來
+        # 這個來源要的 skill 全都不存在（上游刪除或改名）時 npx 也會失敗：只警告，繼續處理其他來源
         # 先存 exit code：下面執行 node --version 會覆蓋 $LASTEXITCODE
         $node = (& node --version 2>$null)
-        Write-Warning "npx skills add 失敗（exit $code），已停止，剩下的 skill 沒有安裝。"
+        Write-Warning "npx skills add $($g.Name) 失敗（exit $code）。若錯誤是 SKILLS_NO_MATCHING_SKILLS，代表上游已沒有這些 skill，請更新清單。"
         Write-Warning "目前 Node.js：$(if ($node) { $node } else { '找不到 node' })。若上面的錯誤是 EBADENGINE 或 node:zlib 的 SyntaxError，代表 Node.js 太舊（skills 需要 22 以上）"
         Write-Warning "  winget 安裝的話：winget list --name Node.js 看識別碼；若是 OpenJS.NodeJS.21 這類固定主版號的套件，upgrade 不會跨主版號，"
         Write-Warning "  要先 winget uninstall <識別碼>，再 winget install OpenJS.NodeJS.LTS。升級後開新的終端機，執行 sync-skills -Install"
-        return
+        continue
       }
     }
   }
+  # npx skills add 找不到 skill 時不會報錯，只會默默跳過（例如上游已刪除或改名），裝完再對一次
+  if ($rows -and -not $WhatIfPreference) {
+    $tried = @($rows | ForEach-Object Skill)
+    $still = @(Get-States | Where-Object { $_.State -eq 'missing' -and $_.Skill -in $tried } | ForEach-Object Skill)
+    if ($still) {
+      Write-Warning '下列 skill 裝完仍不存在，上游可能已刪除或改名，請檢查來源後更新清單：'
+      $still | ForEach-Object { Write-Warning "  $_" }
+    }
+  }
   if (Test-Path -LiteralPath $Linker) { & $Linker -HomeDir $HomeDir -WhatIf:$WhatIfPreference }
+  Initialize-SkillEnvs
+}
+
+# 執行 uv；-WhatIf 時只印出指令。失敗時丟出例外
+function Invoke-Uv([string[]]$uvArgs) {
+  Write-Host "+ uv $($uvArgs -join ' ')"
+  if ($PSCmdlet.ShouldProcess("uv $($uvArgs -join ' ')", '執行')) {
+    & uv @uvArgs
+    if ($LASTEXITCODE -ne 0) { throw "uv $($uvArgs[0]) 失敗（exit $LASTEXITCODE）" }
+  }
+}
+
+# 在一個 skill 目錄內建 uv 環境；$extra 是 uv sync 的額外參數（可含 --python）
+function Initialize-SkillEnv([string]$dir, [string[]]$extra) {
+  if (-not (Test-Path -LiteralPath (Join-Path $dir 'pyproject.toml'))) {
+    $req = Join-Path $dir 'requirements.txt'
+    if (-not (Test-Path -LiteralPath $req)) { throw '沒有 pyproject.toml 也沒有 requirements.txt' }
+    # 沒指定 --python 時 uv init 會拿系統 python（可能太舊）當 requires-python 下限，所以一定要指定
+    $i = [Array]::IndexOf($extra, '--python')
+    if ($i -lt 0 -or $i + 1 -ge $extra.Count) { throw '只有 requirements.txt 的 skill 要在 skills-env.list 指定 --python' }
+    Invoke-Uv @('init', '-q', '--bare', '--no-workspace', '--python', $extra[$i + 1], $dir)
+    Invoke-Uv @('add', '-q', '--project', $dir, '--no-sync', '-r', $req)
+  }
+  Invoke-Uv (@('sync', '-q', '--project', $dir) + $extra)
+}
+
+# 依 skills-env.list 建環境；有裝、帶 Python 依賴、卻沒列入清單的 skill 只提醒
+function Initialize-SkillEnvs {
+  $listed = @()
+  if (Test-Path -LiteralPath $EnvList) {
+    foreach ($line in Get-Content -LiteralPath $EnvList) {
+      $f = @(($line -replace '#.*', '').Trim() -split '\s+' | Where-Object { $_ })
+      if (-not $f) { continue }
+      $skill = $f[0]; $listed += $skill
+      $dir = Join-Path $SkillsDir $skill
+      if (-not (Test-Path -LiteralPath $dir -PathType Container)) { continue }
+      if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+        Write-Warning "找不到 uv，略過 $skill 的 Python 環境（裝好 uv 後重跑 sync-skills -Install）"
+        continue
+      }
+      Write-Host "== Python 環境：$skill"
+      try { Initialize-SkillEnv $dir @($f | Select-Object -Skip 1) }
+      catch { Write-Warning "$skill 的 Python 環境建立失敗：$_" }
+    }
+  }
+  Get-ChildItem -LiteralPath $SkillsDir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+    if ($_.Name -in $listed) { return }
+    if ((Test-Path -LiteralPath (Join-Path $_.FullName 'pyproject.toml')) -or
+        (Test-Path -LiteralPath (Join-Path $_.FullName 'requirements.txt'))) {
+      Write-Warning "$($_.Name) 帶有 Python 依賴，但不在 $EnvList，沒有建環境"
+    }
+  }
 }
 
 function Invoke-Install {

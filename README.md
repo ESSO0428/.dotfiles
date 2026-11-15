@@ -84,7 +84,7 @@ DRY_RUN=1 ./install.sh --all    # preview
 | `claude`   | `.claude/{CLAUDE.md,RTK.md,settings.json,keybindings.json,agents/,commands/}`, `.config/ccstatusline/settings.json` |
 | `opencode` | `.config/opencode/{opencode.jsonc,tui.json,dcp.jsonc,package.json,opencode-quota/}` |
 | `pi`       | `.pi/agent/{settings.json,keybindings.json,sidebar-ui.json,pi-cc-extensions.json,pi-command-palette.json,agent-switcher.json,pi-goal.json,agents/,extensions/*.json}` |
-| `agents`   | `.agents/skills.list`, `.agents/scripts/{sync-skills,link-claude-skills.sh}`   |
+| `agents`   | `.agents/{skills,skills-env}.list`, `.agents/scripts/{sync-skills,link-claude-skills.sh}` |
 
 `examples/ssh_config` is a reference ssh config only; it is **not** linked (it would overwrite
 `~/.ssh/config`).
@@ -148,6 +148,17 @@ arguments in a terminal for an fzf menu (the preview shows each skill's `SKILL.m
 
 Nothing is ever uninstalled. After installing, `link-claude-skills.sh` links the skills into
 `~/.claude/skills`. Edit the list, then commit it from `~/.dotfiles` as usual.
+
+`npx skills add` silently skips a skill the source no longer has (deleted or renamed upstream);
+`sync-skills` warns about any skill still missing after the install, so fix the list entry.
+
+**Skills with Python tools** (e.g. `ppt-master`, `hung-yi-lee-ai-mentor-skills`) are listed in
+`~/.agents/skills-env.list` as `<skill>  [uv sync args...]`. Every install run then builds a
+`.venv` inside each listed skill with `uv` (incremental when it already exists, so rerun
+`sync-skills --install` after `npx skills update`). A skill with only `requirements.txt` first gets
+a `pyproject.toml` via `uv init` + `uv add -r`, and must give `--python` (its minimum version).
+Run the tools with `uv run --project <skill dir> python <script>`. An installed skill that ships
+`pyproject.toml` / `requirements.txt` but is missing from the env list triggers a warning.
 
 ```bash
 sync-skills            # interactive (falls back to --install without fzf or a terminal)

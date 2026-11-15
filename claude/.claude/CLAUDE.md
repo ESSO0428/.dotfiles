@@ -32,4 +32,4 @@ Workflow 的 `agent()` 不指定 `model` 時會繼承主模型，大量派出很
 | skill | `<skill 根目錄>` | 文件裡的腳本路徑 → 絕對路徑 |
 |---|---|---|
 | hung-yi-lee-ai-mentor-skills | `~/.agents/skills/hung-yi-lee-ai-mentor-skills` | `hung-yi-lee-ai-mentor-skills/...` → `~/.agents/skills/hung-yi-lee-ai-mentor-skills/...` |
-| ppt-master | `~/.agents/skills/ppt-master` | `skills/ppt-master/...` → `~/.agents/skills/ppt-master/skills/ppt-master/...` |
+| ppt-master | `~/.agents/skills/ppt-master` | `skills/ppt-master/...` → `~/.agents/skills/ppt-master/...` |
