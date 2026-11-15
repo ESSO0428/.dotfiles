@@ -197,6 +197,7 @@ cd $HOME\.dotfiles
 | `opencode`  | `~\.config\opencode`                                      | symlink   |
 | `pi`        | `~\.pi\agent`                                             | symlink   |
 | `agents`    | `~\.agents\skills.list`, `scripts\*.ps1` (bash scripts skipped); adds `~\.agents\scripts` to `PATH`, runs `sync-skills.ps1` | symlink |
+| `herdr`     | `config.toml` in `%XDG_CONFIG_HOME%\herdr`, else `%APPDATA%\herdr` (same file as Linux) | symlink |
 | `vimrc`     | `~\.ideavimrc`, `~\keymap.vim`                            | symlink   |
 | `nvim`      | `%LOCALAPPDATA%\nvim` (Windows-only config)               | junction  |
 | `documents` | `Documents\config.xlaunch`; PowerShell profile only if missing | symlink / copy once |

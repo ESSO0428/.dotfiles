@@ -10,6 +10,7 @@
   claude       ~/.claude（和 Linux 共用同一份 settings.json）          symlink
   opencode     ~/.config/opencode                                symlink
   pi           ~/.pi/agent                                       symlink
+  herdr        $XDG_CONFIG_HOME\herdr 或 %APPDATA%\herdr 的 config.toml（和 Linux 共用）  symlink
   agents       ~/.agents/skills.list、scripts/*.ps1（.sh 與 bash 腳本不會連結）  symlink
                之後把 ~/.agents/scripts 加進使用者 PATH，並執行 sync-skills.ps1
   vimrc        ~/.ideavimrc、~/keymap.vim                         symlink
@@ -47,6 +48,7 @@ param(
   [string]$HomeDir = $HOME,
   [string]$LocalAppData = $env:LOCALAPPDATA,
   [string]$Documents = [Environment]::GetFolderPath('MyDocuments'),
+  [string]$AppData = $env:APPDATA,
   [string]$OneDriveRoot = '',
   # 內部用：自動提權後的視窗用來接續執行，格式 "claude=repo,pi=adopt"
   [string]$Plan = '',
@@ -61,11 +63,12 @@ $Win = Join-Path $Repo 'windows'
 $Backup = Join-Path $HomeDir ".dotfiles-backup\$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 $Cmdlet = $PSCmdlet
 
-$AllPackages = 'claude', 'opencode', 'pi', 'agents', 'vimrc', 'nvim', 'documents', 'obsidian', 'im-select'
+$AllPackages = 'claude', 'opencode', 'pi', 'agents', 'herdr', 'vimrc', 'nvim', 'documents', 'obsidian', 'im-select'
 $Desc = @{
   'claude'    = 'Claude Code 設定、agents、commands'
   'opencode'  = 'opencode 設定、tui、quota'
   'pi'        = 'pi 設定、sidebar、擴充設定、agents'
+  'herdr'     = 'herdr config.toml（$XDG_CONFIG_HOME\herdr，沒設時 %APPDATA%\herdr）'
   'agents'    = 'skills 清單、sync-skills.ps1（並加進 PATH）'
   'vimrc'     = '.ideavimrc、keymap.vim（JetBrains、VS Code）'
   'nvim'      = 'Windows 版 nvim（%LOCALAPPDATA%\nvim）'
@@ -125,6 +128,12 @@ function Test-Admin {
 function Get-Entries($pkg) {
   switch ($pkg) {
     { $_ -in 'claude', 'opencode', 'pi', 'agents' } { Get-SharedEntries $pkg }
+    'herdr' {
+      # herdr 在 Windows 讀 %APPDATA%\herdr（有設 XDG_CONFIG_HOME 時改讀 $XDG_CONFIG_HOME\herdr），
+      # 和 Linux 的 ~/.config/herdr 不同，所以不走共用 package 的「相對路徑等於家目錄位置」規則
+      $dir = if ($env:XDG_CONFIG_HOME) { Join-Path $env:XDG_CONFIG_HOME 'herdr' } else { Join-Path $AppData 'herdr' }
+      New-Entry $pkg (Join-Path $Repo 'herdr\.config\herdr\config.toml') (Join-Path $dir 'config.toml') 'link'
+    }
     'vimrc' {
       Get-ChildItem -LiteralPath (Join-Path $Win 'home') -File -Force | ForEach-Object {
         New-Entry $pkg $_.FullName (Join-Path $HomeDir $_.Name) 'link'
@@ -319,7 +328,7 @@ function Invoke-Elevated($work, $mode) {
   $oneDrive = @($OneDriveRoot, $env:OneDriveConsumer, $env:OneDrive) | Where-Object { $_ } | Select-Object -First 1
   $argList = @(
     '-NoProfile', '-File', $PSCommandPath, '-Elevated', '-Plan', $plan,
-    '-HomeDir', $HomeDir, '-LocalAppData', $LocalAppData, '-Documents', $Documents
+    '-HomeDir', $HomeDir, '-LocalAppData', $LocalAppData, '-Documents', $Documents, '-AppData', $AppData
   )
   if ($oneDrive) { $argList += '-OneDriveRoot', $oneDrive }
   $quoted = ($argList | ForEach-Object { if ($_ -match '^-\w+$') { $_ } else { '"' + $_ + '"' } }) -join ' '
