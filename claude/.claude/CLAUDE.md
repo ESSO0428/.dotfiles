@@ -16,6 +16,15 @@
 
 派出時 prompt 必須寫清楚：檔案路徑、要改什麼（或要跑什麼）、驗收指令、不能碰的範圍。回來後由主 agent 驗收（看 diff、跑驗收指令）再回報使用者；同一工作延續時優先用 SendMessage 續接原 agent。
 
+## Workflow（ultracode）的模型分配
+
+Workflow 的 `agent()` 不指定 `model` 時會繼承主模型，大量派出很快用完 5 小時額度。因此：
+
+- **預設每個 `agent()` 都寫 `model: 'sonnet'`**：閱讀、搜尋、抽取、合併、一般複核與彙整都用 Sonnet；純機械性步驟可用 `'haiku'`。
+- **Opus 只給真正重要的少數 agent**：使用者會據以做決定的最終判斷、困難的反駁複核。啟動前說明哪幾個用 Opus。也可以讓 Sonnet 產出後，由主 agent（Opus）親自讀一遍抽查，不另開 Opus agent。
+- **大量工作分小批**：先跑最有價值的一批，每個 agent 完成就把結果寫入檔案，下一批再依結果決定範圍；撞到額度上限時已落檔的部分不會丟。不要一次排上百個 agent。
+- 輸出寫到持久位置（例如專案內的 `scratch/`），不要只放在 session 暫存目錄。
+
 # skill 的 Python 工具
 
 系統 `python3` 與 `~/.venv` 都沒有這些 skill 的依賴。執行 skill 文件裡的 Python 指令時，一律寫成 `uv run --project <skill 根目錄> python <腳本絕對路徑> ...`，其餘參數照文件：
