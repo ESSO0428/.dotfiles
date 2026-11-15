@@ -15,6 +15,7 @@
       }
     ]
   },
+  "model": "opus",
   "statusLine": {
     "type": "command",
     "command": "npx -y ccstatusline@latest",
@@ -39,8 +40,15 @@
       }
     }
   },
+  "modelSettings": {
+    "claude-fable-5-2": {
+      "effortLevel": "medium"
+    }
+  },
+  "autoUpdatesChannel": "latest",
   "tui": "fullscreen",
   "theme": "dark",
   "autoCompactEnabled": false,
-  "autoContinueAtUsageLimit": true
+  "autoContinueAtUsageLimit": true,
+  "enableWorkflows": true
 }

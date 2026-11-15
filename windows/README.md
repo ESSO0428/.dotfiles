@@ -17,7 +17,7 @@ windows/
 ├── localappdata/nvim/    → %LOCALAPPDATA%\nvim   Windows-only Neovim / Neovim Qt config
 ├── documents/            → Documents       config.xlaunch, PowerShell profile (template)
 ├── obsidian/             → Obsidian Vault  .obsidian.vimrc (copied, the vault syncs via OneDrive)
-├── overrides/<package>/  replaces a shared file on Windows (claude settings.json without rtk)
+├── overrides/<package>/  replaces a shared file on Windows only (currently unused)
 ├── im-select.exe         → ~ and C:\Windows (copied)
 └── Nvim-QT-Right-Click.reg   import by hand
 ```

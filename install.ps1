@@ -7,7 +7,7 @@
   不帶參數執行時進入互動模式：勾選 package，再逐一決定和 repo 不同的檔案怎麼處理。
 
   package      內容                                              方式
-  claude       ~/.claude（Windows 版 settings.json 在 windows/overrides）  symlink
+  claude       ~/.claude（和 Linux 共用同一份 settings.json）          symlink
   opencode     ~/.config/opencode                                symlink
   pi           ~/.pi/agent                                       symlink
   agents       ~/.agents/skills.list、scripts/*.ps1（.sh 與 bash 腳本不會連結）  symlink
@@ -63,7 +63,7 @@ $Cmdlet = $PSCmdlet
 
 $AllPackages = 'claude', 'opencode', 'pi', 'agents', 'vimrc', 'nvim', 'documents', 'obsidian', 'im-select'
 $Desc = @{
-  'claude'    = 'Claude Code 設定、agents、commands（Windows 版 settings.json）'
+  'claude'    = 'Claude Code 設定、agents、commands'
   'opencode'  = 'opencode 設定、tui、quota'
   'pi'        = 'pi 設定、sidebar、擴充設定、agents'
   'agents'    = 'skills 清單、sync-skills.ps1（並加進 PATH）'
@@ -479,8 +479,9 @@ foreach ($p in $work) {
 
 if (Test-Path -LiteralPath $Backup) { Write-Host "原有檔案已備份到 $Backup" }
 if ($adopted) { Write-Host "有 package 以這台為準，請到 $Repo 用 git diff 檢查：每台都要的就 commit，不要的用 git checkout -- <檔案> 還原" }
+# settings.json 和 Linux 共用，裡面有 rtk hook：沒裝 rtk 時 Bash 仍會執行，只是每次都顯示 hook 錯誤
 if ('claude' -in $work -and -not (Get-Command rtk -ErrorAction SilentlyContinue)) {
-  Write-Host '提醒：這台沒有 rtk，所以 claude 用的是 windows\overrides 裡沒有 rtk hook 的 settings.json'
+  Write-Warning '這台沒有 rtk：Claude 每次執行 Bash 都會顯示 rtk hook 的錯誤（指令仍會執行）。請安裝 rtk。'
 }
 if ('agents' -in $work -and -not $Elevated) { Invoke-AgentsExtras $interactive }
 Write-Host '完成'

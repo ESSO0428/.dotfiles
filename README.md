@@ -181,7 +181,7 @@ cd $HOME\.dotfiles
 
 | package     | target                                                    | how       |
 |-------------|-----------------------------------------------------------|-----------|
-| `claude`    | `~\.claude`, `~\.config\ccstatusline` (shared files)      | symlink   |
+| `claude`    | `~\.claude`, `~\.config\ccstatusline` (same files as Linux) | symlink   |
 | `opencode`  | `~\.config\opencode`                                      | symlink   |
 | `pi`        | `~\.pi\agent`                                             | symlink   |
 | `agents`    | `~\.agents\skills.list`, `scripts\*.ps1` (bash scripts skipped); adds `~\.agents\scripts` to `PATH`, runs `sync-skills.ps1` | symlink |
@@ -191,8 +191,9 @@ cd $HOME\.dotfiles
 | `obsidian`  | `OneDrive\應用程式\remotely-save\Obsidian Vault\.obsidian.vimrc` | copy |
 | `im-select` | `~\im-select.exe`, `C:\Windows\im-select.exe` (admin)    | copy      |
 
-`windows/overrides/<package>/` replaces a shared file on Windows only, for example
-`windows/overrides/claude/.claude/settings.json` drops the `rtk hook`. Everything else under
+`windows/overrides/<package>/<path>` replaces a shared file on Windows only (currently unused).
+Claude's `settings.json` is shared, including its `rtk hook`: without `rtk` on Windows, Bash
+still runs but every call shows a hook error, so install `rtk` there too. Everything else under
 `windows/` (from the former [`.win-dotfiles`](https://github.com/ESSO0428/.win-dotfiles) repo,
 merged with its history) is Windows-only and never touched by `install.sh`. See
 [`windows/README.md`](windows/README.md).
