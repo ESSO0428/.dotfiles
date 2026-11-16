@@ -27,7 +27,7 @@ Workflow 的 `agent()` 不指定 `model` 時會繼承主模型，大量派出很
 
 # skill 的 Python 工具
 
-系統 `python3` 與 `~/.venv` 都沒有這些 skill 的依賴。執行 skill 文件裡的 Python 指令時，一律寫成 `uv run --project <skill 根目錄> python <腳本絕對路徑> ...`，其餘參數照文件：
+系統 `python3` 與 `~/.venv` 都沒有 skill 的依賴。skill 根目錄（全域或專案內 `.agents/skills/` 皆同）有 `uv.lock`，或 `pyproject.toml` 含 `[project]` 時，一律寫成 `uv run --project <skill 根目錄> python <腳本絕對路徑> ...`；SKILL.md 有「執行工具」段落時以它為準。路徑寫法特殊的 skill：
 
 | skill | `<skill 根目錄>` | 文件裡的腳本路徑 → 絕對路徑 |
 |---|---|---|
