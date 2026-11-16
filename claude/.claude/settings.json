@@ -50,5 +50,8 @@
   "theme": "dark",
   "autoCompactEnabled": false,
   "autoContinueAtUsageLimit": true,
-  "enableWorkflows": true
+  "enableWorkflows": true,
+  "permissions": {
+    "defaultMode": "auto"
+  }
 }
