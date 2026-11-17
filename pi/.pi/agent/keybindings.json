@@ -1,7 +1,8 @@
 {
-  "tui.editor.cursorWordLeft": [],
-  "tui.editor.cursorWordRight": [],
-  "tui.editor.cursorLeft": [],
+  "tui.editor.cursorWordLeft": ["ctrl+left"],
+  "tui.editor.cursorWordRight": ["ctrl+right"],
+  "tui.editor.cursorLeft": ["left"],
+  "tui.editor.cursorRight": ["right"],
   "app.tree.foldOrUp": [],
   "app.tree.unfoldOrDown": [],
   "app.models.toggleProvider": [],
