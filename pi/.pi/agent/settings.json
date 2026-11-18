@@ -33,7 +33,8 @@
     "npm:@esso0428/pi-tasks",
     "npm:@esso0428/pi-subagents",
     "npm:@huntye1/pi-auto-session-name",
-    "npm:pi-rewind-hook"
+    "npm:pi-rewind-hook",
+    "npm:pi-freeflow"
   ],
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-terra",
